@@ -1,3 +1,5 @@
+import io
+
 import json
 
 import collections
@@ -72,31 +74,3 @@ def xml_to_samples(filename):
         yield {'translation': trans, 'tokens': tokens, 'filename': Path(f.name).name, 'sentence_id': sentence_id}
 
     f.close()
-
-def sequences_to_lexicon(training_aligned_sequences):
-    num_pairs = sum(len(sentence['orig']) for sentence in training_aligned_sequences)
-    lexicon = {}
-
-    with tqdm(desc='Learning lexicon', unit='pairs', total=num_pairs) as pbar:
-        for sentence in training_aligned_sequences:
-            for orig_token, norm_token in zip(sentence['orig'], sentence['norm']):
-                if orig_token not in lexicon.keys():
-                    lexicon[orig_token] = collections.Counter()
-                lexicon[orig_token].update([norm_token])
-                pbar.update()
-
-    return lexicon
-
-def lexicon_to_translation_dataset(type_lexicon):
-    def gen_dataset():
-        for orig_token, norm_frequencies in type_lexicon.items():
-            most_frequent_norm_token, _ = norm_frequencies.most_common(1)[0]
-            yield {'orig': orig_token, 'norm': most_frequent_norm_token}
-
-    return Dataset.from_generator(gen_dataset)
-
-def load_lexicon(json_path):
-    with open(json_path) as f:
-        obj = json.load(f)
-
-    return {orig_token: collections.Counter(v) for orig_token, v in obj.items()}
