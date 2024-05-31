@@ -2,6 +2,7 @@ import itertools
 
 import collections
 from datasets import Dataset
+from tokenizers.decoders import BPEDecoder
 from tqdm import tqdm
 
 from transformers import PreTrainedTokenizerFast
@@ -23,6 +24,7 @@ def train_tokenizer(lexicon, character_model=False, vocab_size=200, model_max_le
                     yield norm_token
 
     tok = Tokenizer(BPE(unk_token="<unk>"))
+    tok.decoder = BPEDecoder()
 
     if character_model:
         alphabet = list(set(itertools.chain.from_iterable(gen_types())))

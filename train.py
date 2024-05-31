@@ -33,10 +33,10 @@ def main():
 
     parser.add_argument('--train_file', type=argparse.FileType('r'),
                         default=Path('dataset/processed/train.lexicon.json'),
-                        help='Path to training file')
+                        help='Path to training file (default: %(default)s')
     parser.add_argument('--eval_file', type=argparse.FileType('r'), default=Path('dataset/processed/dev.lexicon.json'),
-                        help='Path to evaluation file')
-    parser.add_argument('--output_dir', type=argparse.FileType('d'), default=Path('model_output'),
+                        help='Path to evaluation file (default: %(default)s')
+    parser.add_argument('--output_dir', type=str, default='model_output',
                         help='Path to model output directory (default: %(default)s)')
     parser.add_argument('--char_vocab', type=bool, default=False, help='Use alphabet as vocabulary (default: %(default)s)')
     parser.add_argument('--vocab_size', type=int, default=200, help='Vocabulary size (default: %(default)s)')
@@ -180,18 +180,24 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    trainer.train()
-
     train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
     trainer.save_model()
+    trainer.create_model_card()
+    trainer.save_state()
 
     metrics = train_result.metrics
     metrics["train_samples"] = len(translation_dataset_tokenized['train'])
 
     trainer.log_metrics("train", metrics)
     trainer.save_metrics("train", metrics)
-    trainer.save_state()
 
+    logger.info("*** Evaluate ***")
+
+    metrics = trainer.evaluate(metric_key_prefix="eval")
+    metrics["eval_samples"] = len(translation_dataset_tokenized['dev'])
+
+    trainer.log_metrics("eval", metrics)
+    trainer.save_metrics("eval", metrics)
 
 if __name__ == '__main__':
     main()
