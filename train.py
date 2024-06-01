@@ -10,8 +10,8 @@ from transformers import BartConfig, BartForConditionalGeneration, DataCollatorF
     Seq2SeqTrainer, AutoTokenizer
 from transformers.trainer_utils import get_last_checkpoint, set_seed
 
-from hybrid_textnorm.preprocess import lexicon_to_translation_dataset, load_lexicon
 from hybrid_textnorm.training import train_tokenizer
+from hybrid_textnorm.lexicon import Lexicon
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,9 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train_file', type=argparse.FileType('r'),
-                        default=Path('dataset/processed/train.lexicon.json'),
+                        default=Path('dataset/processed/train.lexicon.jsonl'),
                         help='Path to training file (default: %(default)s')
-    parser.add_argument('--eval_file', type=argparse.FileType('r'), default=Path('dataset/processed/dev.lexicon.json'),
+    parser.add_argument('--eval_file', type=argparse.FileType('r'), default=Path('dataset/processed/dev.lexicon.jsonl'),
                         help='Path to evaluation file (default: %(default)s')
     parser.add_argument('--output_dir', type=str, default='model_output',
                         help='Path to model output directory (default: %(default)s)')
@@ -59,12 +59,24 @@ def main():
     args = parser.parse_args()
 
     # set up datasets
-    split_lexicons = {
-        'train': load_lexicon(args.train_file),
-        'dev': load_lexicon(args.eval_file),
-    }
+    if args.train_file.name.endswith('jsonl'):
+        split_lexicons = {
+            'train': Lexicon.from_dataset('json', data_files=str(args.train_file), split='train'),
+            'dev': Lexicon.from_dataset('json', data_files=str(args.eval_file), split='train')
+        }
+    else:
+        # legacy format
+        import collections, json
+        split_lexicons = {}
+        with open(args.train_file) as f:
+            split_lexicons['train'] = Lexicon({k: collections.Counter(v) for k, v in json.load(f).items()})
+        with open(args.eval_file) as f:
+            split_lexicons['dev'] = Lexicon({k: collections.Counter(v) for k, v in json.load(f).items()})
+
+
+
     translation_dataset = DatasetDict(
-        {split: lexicon_to_translation_dataset(lexicon) for split, lexicon in split_lexicons.items()})
+        {split: lexicon.to_dataset(k_most_common=1) for split, lexicon in split_lexicons.items()})
 
     # load last checkpoint if applicable
     tokenizer = None
