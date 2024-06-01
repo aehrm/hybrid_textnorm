@@ -7,7 +7,17 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+regex = "^2024.5.15"
+lxml = "^5.2.2"
+datasets = "^2.19.1"
+pandas = "^2.0"
+more-itertools = "^10.2.0"
+tokenizers = "^0.19.1"
+transformers = {extras = ["torch"], version = "^4.41.2"}
+torch = "^2.3.0"
 
+
+[tool.poetry.group.dev.dependencies]
 
 [build-system]
 requires = ["poetry-core"]
