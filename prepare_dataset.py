@@ -41,6 +41,8 @@ def main():
     parser.add_argument('--output_path', type=Path,
                         default=Path(__file__).parent / 'dataset' / 'processed',
                         help='Path to DTAEC xml files (default: %(default)s)')
+    parser.add_argument('--write_baseline_format', type=bool, default=False,
+                        help='Additionally format the output for the baseline reproduction experiments (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -69,21 +71,22 @@ def main():
     print('writing auxiliary files for baseline systems')
 
     # dataset file for baseline systems
-    for split, split_dataset in dataset.items():
-        cognate_pairs = list(
-            itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
-        write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.orig')
-        write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norm')
-        write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs], args.output_path / f'{split}.parallel')
+    if args.write_baseline_format:
+        for split, split_dataset in dataset.items():
+            cognate_pairs = list(
+                itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
+            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.orig')
+            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norm')
+            write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs], args.output_path / f'{split}.parallel')
 
-        trans = str.maketrans("", "", '░▁')
-        cognate_pairs_without_specials = [(orig, norm.translate(trans)) for orig, norm in cognate_pairs]
-        write_token_lines([orig for orig, norm in cognate_pairs_without_specials],
-                          args.output_path / f'{split}.nospacing.orig')
-        write_token_lines([norm for orig, norm in cognate_pairs_without_specials],
-                          args.output_path / f'{split}.nospacing.norm')
-        write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs_without_specials],
-                          args.output_path / f'{split}.nospacing.parallel')
+            trans = str.maketrans("", "", '░▁')
+            cognate_pairs_without_specials = [(orig, norm.translate(trans)) for orig, norm in cognate_pairs]
+            write_token_lines([orig for orig, norm in cognate_pairs_without_specials],
+                              args.output_path / f'{split}.nospacing.orig')
+            write_token_lines([norm for orig, norm in cognate_pairs_without_specials],
+                              args.output_path / f'{split}.nospacing.norm')
+            write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs_without_specials],
+                              args.output_path / f'{split}.nospacing.parallel')
 
 
 
