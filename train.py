@@ -177,7 +177,7 @@ def main():
         # save_steps=1/args.num_epochs/20,
         load_best_model_at_end=True,
         push_to_hub=False,
-        metric_for_best_model='eval_wordacc',
+        metric_for_best_model='eval_wordacc_oov',
         include_inputs_for_metrics=True,
     )
     
