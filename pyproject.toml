@@ -15,6 +15,7 @@ more-itertools = "^10.2.0"
 tokenizers = "^0.19.1"
 transformers = {extras = ["torch"], version = "^4.41.2"}
 torch = "^2.3.0"
+somajo = "^2.4.2"
 
 
 [tool.poetry.group.dev.dependencies]

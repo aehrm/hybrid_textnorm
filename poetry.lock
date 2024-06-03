@@ -1208,8 +1208,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.20.3", markers = "python_version < \"3.10\""},
-    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
+    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -1640,6 +1640,20 @@ files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
+
+[[package]]
+name = "somajo"
+version = "2.4.2"
+description = "A tokenizer and sentence splitter for German and English web and social media texts."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "SoMaJo-2.4.2-py3-none-any.whl", hash = "sha256:4b2ddd97a22b402cd95f26b4f5f4ae337a0b8c83ef18f0153eb180fb1fecec29"},
+    {file = "SoMaJo-2.4.2.tar.gz", hash = "sha256:fa38a2804e6e811f03f9eb1dac56d42b6ccdf1bd316445f5c20f18a93fab4d48"},
+]
+
+[package.dependencies]
+regex = ">=2019.02.18"
 
 [[package]]
 name = "sympy"
@@ -2212,4 +2226,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "2b57bc1d191741042eff2abfebd68871d6cae5975ae4895a2e1d66dc088d210d"
+content-hash = "0add115b50ea0f2429886d187c494b110c2a4dfef86943fbecfdf2aa37b37f73"
