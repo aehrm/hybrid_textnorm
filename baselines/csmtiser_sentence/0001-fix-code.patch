@@ -1,0 +1,41 @@
+diff --git a/csmtiser/csmtiser.py b/csmtiser/csmtiser.py
+index c93fc93..130fb3e 100644
+--- a/csmtiser/csmtiser.py
++++ b/csmtiser/csmtiser.py
+@@ -62,7 +62,7 @@ class Csmtiser:
+         if self.config.align:
+             align = '-t '
+         os.system(self.config.moses + '/moses -xml-input exclusive -dl 0 ' + align + '-threads ' + str(
+-            self.config.num_cores) + ' -f ' + self.config.working_dir + '/mert-work/moses.ini < ' + pth + ' 2> ' + self.config.working_dir + '/norm.log 1> ' + pth + '.norm')
++            self.config.num_cores) + ' -f ' + self.config.working_dir + '/mert-work/moses.ini < ' + pth + '  1> ' + pth + '.norm')
+         pth += '.norm'
+ 
+         if self.config.align:
+diff --git a/train.py b/train.py
+index bfd3433..114d205 100644
+--- a/train.py
++++ b/train.py
+@@ -23,12 +23,12 @@ for index,pth in enumerate(config.lms):
+     pth2=config.working_dir+'/lm_'+str(index-1)+'.proc'
+   else:
+     pth2=pth
+-  os.system(config.kenlm+'/lmplz -o '+str(config.lm_order)+' --discount_fallback < '+pth2+' 1> '+pth2+'.arpa 2>> '+config.working_dir+'/train.log')
+-  os.system(config.kenlm+'/build_binary '+pth2+'.arpa '+pth2+'.blm >> '+config.working_dir+'/train.log 2>&1')
++  os.system(config.kenlm+'/lmplz -o '+str(config.lm_order)+' --discount_fallback < '+pth2+' 1> '+pth2+'.arpa ')
++  os.system(config.kenlm+'/build_binary '+pth2+'.arpa '+pth2+'.blm  2>&1')
+ 
+ sys.stdout.write('Building the untuned system\n')
+ sys.stdout.flush()
+-os.system(config.moses_scripts+'/training/train-model.perl -root-dir '+config.working_dir+' -corpus '+config.working_dir+'/train -f orig -e norm -alignment grow-diag-final-and -lm 0:'+str(config.lm_order)+':'+config.working_dir+'/train.norm.blm:8 -cores '+str(config.num_cores)+' --mgiza -mgiza-cpus '+str(config.num_cores)+' -external-bin-dir '+config.mgiza+' >> '+config.working_dir+'/train.log 2>&1')
++os.system(config.moses_scripts+'/training/train-model.perl -root-dir '+config.working_dir+' -corpus '+config.working_dir+'/train -f orig -e norm -alignment grow-diag-final-and -lm 0:'+str(config.lm_order)+':'+config.working_dir+'/train.norm.blm:8 -cores '+str(config.num_cores)+' --mgiza -mgiza-cpus '+str(config.num_cores)+' -external-bin-dir '+config.mgiza+'  2>&1')
+ 
+ sys.stdout.write('Updating the moses.ini file\n')
+ ini=open(config.working_dir+'/model/moses.ini').read().replace('[distortion-limit]\n6','[distortion-limit]\n0')
+@@ -46,6 +46,6 @@ for index in range(1,len(config.lms)):
+ modini.close()
+ sys.stdout.write('Tuning the system\n')
+ sys.stdout.flush()
+-os.system(config.moses_scripts+'training/mert-moses.pl '+config.working_dir+'/dev.orig '+config.working_dir+'/dev.norm '+config.moses+'/moses '+config.working_dir+'/model/moses.mod.ini --mertdir '+config.moses+' --working-dir '+config.working_dir+'/mert-work/ --mertargs="--sctype WER" --decoder-flags="-threads '+str(config.num_cores)+'" >> '+config.working_dir+'/train.log 2>&1')
++os.system(config.moses_scripts+'training/mert-moses.pl '+config.working_dir+'/dev.orig '+config.working_dir+'/dev.norm '+config.moses+'/moses '+config.working_dir+'/model/moses.mod.ini --mertdir '+config.moses+' --working-dir '+config.working_dir+'/mert-work/ --mertargs="--sctype WER --threads='+str(config.num_cores)+'" --decoder-flags="-threads '+str(config.num_cores)+'"  2>&1')
+ sys.stdout.write('Finished\n')
+ sys.stdout.flush()
