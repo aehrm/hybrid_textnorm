@@ -12,7 +12,7 @@ from tqdm import tqdm
 from datasets import disable_caching
 
 from hybrid_textnorm.lexicon import Lexicon
-from hybrid_textnorm.preprocess import xml_to_samples
+from hybrid_textnorm.preprocess import xml_to_samples, recombine_tokens
 
 disable_caching()
 
@@ -28,7 +28,6 @@ def write_token_lines(lines, filename):
     print(f'writing to {filename}')
 
 
-
 def main():
     parser = argparse.ArgumentParser()
 
@@ -41,7 +40,7 @@ def main():
     parser.add_argument('--output_path', type=Path,
                         default=Path(__file__).parent / 'dataset' / 'processed',
                         help='Path to DTAEC xml files (default: %(default)s)')
-    parser.add_argument('--write_baseline_format', type=bool, default=False,
+    parser.add_argument('--write_baseline_format', action='store_true',
                         help='Additionally format the output for the baseline reproduction experiments (default: %(default)s)')
 
     args = parser.parse_args()
@@ -68,25 +67,36 @@ def main():
         lexicon_ds.to_json(lexicon_path)
         print(f'writing to {lexicon_path}')
 
-    print('writing auxiliary files for baseline systems')
-
     # dataset file for baseline systems
     if args.write_baseline_format:
+        print('writing auxiliary files for baseline systems')
+
+        # csmtiser with subsampled dev set, token-level
+        for split, split_dataset in dataset.items():
+            if split == 'dev':
+                split_dataset = split_dataset.shuffle(seed=1234).select(range(300))
+
+            cognate_pairs = list(
+                itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
+
+            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser.orig')
+            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser.norm')
+
+        # csmtiser with subsampled dev set, sentence-level
+        for split, split_dataset in dataset.items():
+            if split == 'dev':
+                split_dataset = split_dataset.shuffle(seed=1234).select(range(300))
+
+            write_token_lines([' '.join(recombine_tokens(sent['tokens']['orig'])) for sent in split_dataset], args.output_path / f'{split}.csmtiser_sent.orig')
+            write_token_lines([' '.join(recombine_tokens(sent['tokens']['norm'])) for sent in split_dataset], args.output_path / f'{split}.csmtiser_sent.norm')
+
+        # norma with spacing
         for split, split_dataset in dataset.items():
             cognate_pairs = list(
                 itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
-            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.orig')
-            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norm')
-            write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs], args.output_path / f'{split}.parallel')
-
-            trans = str.maketrans("", "", '░▁')
-            cognate_pairs_without_specials = [(orig, norm.translate(trans)) for orig, norm in cognate_pairs]
-            write_token_lines([orig for orig, norm in cognate_pairs_without_specials],
-                              args.output_path / f'{split}.nospacing.orig')
-            write_token_lines([norm for orig, norm in cognate_pairs_without_specials],
-                              args.output_path / f'{split}.nospacing.norm')
-            write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs_without_specials],
-                              args.output_path / f'{split}.nospacing.parallel')
+            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.norma.orig')
+            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norma.norm')
+            write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norma.parallel')
 
 
 

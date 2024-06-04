@@ -12,6 +12,8 @@ from lxml import etree
 import more_itertools
 from tqdm import tqdm
 
+from hybrid_textnorm.beam_search import SPACE, MERGE_MARKS
+
 starts_punct = re.compile(r'^\p{Punct}')
 
 def german_transliterate(s):
@@ -20,6 +22,12 @@ def german_transliterate(s):
         .replace('o\u0364', 'ö') \
         .replace('u\u0364', 'ü') \
         .replace('…', '...')
+
+def recombine_tokens(toks):
+    text = ' '.join(toks)
+    text = SPACE.sub(' ', text)
+    text = MERGE_MARKS.sub('', text)
+    return text.split(' ')
 
 def tokens_to_string(toks):
     toks = [' ' + tok if not starts_punct.match(tok) else tok for tok in toks]
