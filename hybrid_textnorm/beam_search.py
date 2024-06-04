@@ -4,15 +4,13 @@ import regex as re
 from torch.utils.data import DataLoader
 from transformers import DataCollatorForSeq2Seq
 
-SPACE = re.compile(r'[ ▁]+')
-REMOVE = re.compile(r'░+ *|["„“()]')
-MY_REGEX = re.compile(r' (\P{Alphanumeric}+)')
+from hybrid_textnorm.preprocess import tokens_to_string, recombine_tokens
+
+QUOT_MARKS = re.compile(r'["„“()]')
 
 def make_tokens_to_llm_string(hyp_tokens):
-    hyp_str = " ".join(hyp_tokens)
-    hyp_str = MY_REGEX.sub(r'\1', hyp_str)
-    hyp_str = SPACE.sub(' ', hyp_str)
-    hyp_str = REMOVE.sub('', hyp_str)
+    hyp_str = tokens_to_string(recombine_tokens(hyp_tokens))
+    hyp_str = QUOT_MARKS.sub('', hyp_str)
     return hyp_str
 
 

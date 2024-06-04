@@ -13,10 +13,10 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausa
 
 import regex as re
 
-from hybrid_textnorm.beam_search import make_tokens_to_llm_string, SPACE, MY_REGEX
+from hybrid_textnorm.beam_search import make_tokens_to_llm_string
 from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization
-from hybrid_textnorm.preprocess import german_transliterate
+from hybrid_textnorm.preprocess import german_transliterate, recombine_tokens, tokens_to_string
 
 logger = logging.getLogger(__name__)
 
@@ -118,16 +118,8 @@ def main():
     else:
         oov_replacement_probabilities = {orig_type: [(orig_type, 1)] for orig_type in oov_types}
 
-    # TODO merge into beam search code
-    REMOVE = re.compile(r'░+ *')
     def print_result(tokens):
-        output_str = ' '.join(tokens)
-        if args.output_text:
-            output_str = MY_REGEX.sub(r'\1', output_str)
-            output_str = SPACE.sub(' ', output_str)
-            output_str = REMOVE.sub('', output_str)
-
-        print(output_str, file=args.output_file)
+        print(tokens_to_string(recombine_tokens(tokens)), file=args.output_file)
 
     if args.no_language_model:
         logger.info('return the maximum prior normalization without language-model reranking')
