@@ -31,14 +31,14 @@ transformers.utils.logging.enable_explicit_format()
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_file', type=argparse.FileType('r'),
-                        default=Path('dataset/processed/train.lexicon.jsonl'),
+    parser.add_argument('--train_file', type=str,
+                        default='dataset/processed/train.lexicon.jsonl',
                         help='Path to training file (default: %(default)s')
-    parser.add_argument('--eval_file', type=argparse.FileType('r'), default=Path('dataset/processed/dev.lexicon.jsonl'),
+    parser.add_argument('--eval_file', type=str, default='dataset/processed/dev.lexicon.jsonl',
                         help='Path to evaluation file (default: %(default)s')
     parser.add_argument('--output_dir', type=str, default='model_output',
                         help='Path to model output directory (default: %(default)s)')
-    parser.add_argument('--char_vocab', type=bool, default=False, help='Use alphabet as vocabulary (default: %(default)s)')
+    parser.add_argument('--char_vocab', action='store_true', help='Use alphabet as vocabulary (default: False)')
     parser.add_argument('--vocab_size', type=int, default=200, help='Vocabulary size (default: %(default)s)')
     parser.add_argument('--d_model', type=int, default=512, help='Dimension of model (default: %(default)s)')
     parser.add_argument('--ffn_dim', type=int, default=1024,
@@ -59,7 +59,7 @@ def main():
     args = parser.parse_args()
 
     # set up datasets
-    if args.train_file.name.endswith('jsonl'):
+    if args.train_file.endswith('jsonl'):
         split_lexicons = {
             'train': Lexicon.from_dataset('json', data_files=str(args.train_file), split='train'),
             'dev': Lexicon.from_dataset('json', data_files=str(args.eval_file), split='train')
@@ -119,7 +119,7 @@ def main():
                         decoder_attention_heads=args.decoder_attention_heads,
                         decoder_layerdrop=0,
                         dropout=0.3,
-                        num_beams=1,
+                        num_beams=4,
                         unk_token_id=tokenizer.unk_token_id,
                         bos_token_id=tokenizer.bos_token_id,
                         eos_token_id=tokenizer.eos_token_id,
