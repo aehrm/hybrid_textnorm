@@ -1,3 +1,5 @@
+import logging
+
 import argparse
 
 import json
@@ -15,6 +17,12 @@ from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.preprocess import xml_to_samples, recombine_tokens
 
 disable_caching()
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(levelname)s - %(message)s",
+)
+logger.setLevel(logging.INFO)
 
 def generate_samples(filenames):
     for filename in filenames:

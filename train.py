@@ -98,6 +98,8 @@ def main():
     def preprocess_dataset(examples):
         inputs = examples['orig']
         targets = examples['norm']
+        assert all(' ' not in tok for tok in inputs)
+        assert all(' ' not in tok for tok in targets)
         model_inputs = tokenizer(inputs, text_target=targets, max_length=tokenizer.model_max_length, truncation=True)
         return model_inputs
 

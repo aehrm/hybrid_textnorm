@@ -20,6 +20,8 @@ def train_tokenizer(lexicon, character_model=False, vocab_size=200, model_max_le
         for orig_token, norm_frequencies in lexicon.items():
             for norm_token, freq in norm_frequencies.items():
                 for _ in range(freq):
+                    assert ' ' not in orig_token
+                    assert ' ' not in norm_token
                     yield orig_token
                     yield norm_token
 
@@ -43,6 +45,7 @@ def train_tokenizer(lexicon, character_model=False, vocab_size=200, model_max_le
     # NOTE: this normalizer is not strictly necessary, but we add it to the tokenizer
     # such that an uninformed user omitting the pre-processing still gets the same result.
     tok.normalizer = Sequence([
+        Replace(' ', ''),  # NOTE: Whitespace should not be a character in the type-based transformer
         Replace('ſ', 's'),
         Replace('a\u0364', 'ä'),
         Replace('o\u0364', 'ö'),

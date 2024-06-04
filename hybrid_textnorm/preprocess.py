@@ -1,3 +1,5 @@
+import logging
+
 import io
 
 import json
@@ -12,7 +14,10 @@ from lxml import etree
 import more_itertools
 from tqdm import tqdm
 
-from hybrid_textnorm.beam_search import SPACE, MERGE_MARKS
+logger = logging.getLogger(__name__)
+
+SPACE = re.compile(r'[ ▁]+')
+MERGE_MARKS = re.compile(r'░+ *')
 
 starts_punct = re.compile(r'^\p{Punct}')
 
@@ -59,10 +64,7 @@ def xml_to_samples(filename):
         tokens_orig = []
         tokens_norm = []
         for tok in tokens:
-            if tok.get('class', None) == 'SPLIT':
-                tokens_orig.append(tok.get('old'))
-                tokens_norm.append(tok.get('new').replace(' ', '▁'))
-            elif tok.get('class', None) == 'JOIN':
+            if tok.get('class', None) == 'JOIN':
                 for _, is_last, subtok in more_itertools.mark_ends(tok):
                     tokens_orig.append(subtok.get('old'))
                     if not is_last:
@@ -71,13 +73,29 @@ def xml_to_samples(filename):
                         tokens_norm.append(subtok.get('new'))
             else:
                 tokens_orig.append(tok.get('old'))
-                tokens_norm.append(tok.get('new'))
+                tokens_norm.append(tok.get('new').replace(' ', '▁'))
 
         tokens_orig = list(map(german_transliterate, tokens_orig))
         tokens_norm = list(map(german_transliterate, tokens_norm))
 
-        trans = {'orig': tokens_to_string(tokens_orig), 'norm': tokens_to_string(tokens_norm)}
+        trans = {'orig': tokens_to_string(tokens_orig), 'norm': tokens_to_string(recombine_tokens(tokens_norm))}
         tokens = {'orig': tokens_orig, 'norm': tokens_norm}
+
+        if not (
+                all(re.fullmatch(r'[^ ▁░]+', tok) for tok in tokens['orig'])
+                and all(re.fullmatch(r'[^ ]+░?', tok) for tok in tokens['norm'])
+                and re.fullmatch(r'[^▁░]+', trans['orig'])
+                and re.fullmatch(r'[^▁░]+', trans['norm'])
+        ):
+            logger.warning(
+                f'Something very bad happened while processing sentence #{sentence_id}; check source xml {filename}\n'
+                f'Will skip this sentence.')
+            continue
+
+        assert all(re.fullmatch(r'[^ ▁░]+', tok) for tok in tokens['orig'])
+        assert all(re.fullmatch(r'[^ ]+░?', tok) for tok in tokens['norm'])
+        assert re.fullmatch(r'[^▁░]+', trans['orig'])
+        assert re.fullmatch(r'[^▁░]+', trans['norm'])
 
         yield {'translation': trans, 'tokens': tokens, 'filename': Path(f.name).name, 'sentence_id': sentence_id}
 
