@@ -52,5 +52,6 @@ def train_tokenizer(lexicon, character_model=False, vocab_size=200, model_max_le
         Replace('u\u0364', 'ü')
     ])
 
-    tokenizer = PreTrainedTokenizerFast(tokenizer_object=tok, model_max_length=model_max_length, pad_token='<pad>', unk_token='<unk>', bos_token='<s>', eos_token='</s>', sep_token='</s>', cls_token='<s>')
+    tokenizer = PreTrainedTokenizerFast(tokenizer_object=tok, model_max_length=model_max_length, pad_token='<pad>', unk_token='<unk>', bos_token='<s>', eos_token='</s>', sep_token='</s>', cls_token='<s>',
+                                        model_input_names=['input_ids', 'attention_mask'])
     return tokenizer
