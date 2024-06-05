@@ -60,12 +60,3 @@ class Lexicon(collections.abc.Mapping):
                     pbar.update()
 
         return cls(lexicon_dict)
-
-def load_lexicon(json_path):
-    if isinstance(json_path, io.TextIOBase):
-        obj = json.load(json_path)
-    else:
-        with open(json_path) as f:
-            obj = json.load(f)
-
-    return {orig_token: collections.Counter(v) for orig_token, v in obj.items()}
