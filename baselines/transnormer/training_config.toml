@@ -1,0 +1,70 @@
+# -*- coding = utf-8 -*-
+
+# Select GPU
+gpu = "cuda:0"  # do `export CUDA_VISIBLE_DEVICES=1` when starting environment
+
+# Random seed (fix for reproducibility)
+random_seed = 42
+
+# Data
+[data]
+paths_train = [
+    "/dataset/train.transnormer.jsonl",
+]
+
+paths_validation = [
+    "/dataset/dev.transnormer.jsonl",
+]
+
+paths_test = [
+    "/dataset/test.transnormer.jsonl",
+]
+n_examples_train = [
+    1_000_000_000,
+]
+n_examples_validation = [
+    1_000_000_000,
+]
+# not used
+n_examples_test = [
+    1,
+]
+
+[tokenizer]
+padding = "longest"
+min_length_input = 0
+max_length_input = 512
+max_length_output = 512
+# input_transliterator = "Transliterator1"
+
+# Model that is retrained
+[language_models]
+checkpoint_encoder_decoder = "google/byt5-small"
+# checkpoint_encoder = "dbmdz/bert-base-historic-multilingual-cased"
+# checkpoint_decoder = "bert-base-multilingual-cased"
+
+[training_hyperparams]
+batch_size = 4
+gradient_accumulation_steps = 2
+epochs = 5
+learning_rate = 0.001
+fp16 = false
+save_strategy = "epoch"
+eval_strategy = "epoch"
+eval_steps = 0
+logging_strategy = "steps"
+logging_steps = 100
+
+
+# Params for beam search decoding
+# see https://huggingface.co/blog/how-to-generate and https://huggingface.co/16transformers/v4.10.1/main_classes/model.html
+# These initial parameters were copied from
+# https://huggingface.co/blog/warm-starting-encoder-decoder#warm-starting-the-encoder-decoder-model
+[beam_search_decoding]
+no_repeat_ngram_size = 0
+early_stopping = true
+length_penalty = 2.0
+num_beams = 4
+decoder_start_token_id = 0
+eos_token_id = 1
+pad_token_id = 0

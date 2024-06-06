@@ -106,6 +106,11 @@ def main():
             write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norma.norm')
             write_token_lines([orig + '\t' + norm for orig, norm in cognate_pairs], args.output_path / f'{split}.norma.parallel')
 
+        # transnormer
+        for split, split_dataset in dataset.items():
+            split_dataset = split_dataset.select_columns(['translation']).flatten().rename_columns({'translation.orig': 'orig', 'translation.norm': 'norm'})
+            split_dataset.to_json(args.output_path / f'{split}.transnormer.jsonl')
+
 
 
 if __name__ == '__main__':

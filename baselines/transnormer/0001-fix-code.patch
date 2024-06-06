@@ -1,0 +1,20 @@
+diff --git a/src/transnormer/models/train_model.py b/src/transnormer/models/train_model.py
+index 6fb6182..50b4726 100644
+--- a/src/transnormer/models/train_model.py
++++ b/src/transnormer/models/train_model.py
+@@ -257,6 +257,7 @@ def train_seq2seq_model(
+         predict_with_generate=True,
+         num_train_epochs=configs["training_hyperparams"]["epochs"],
+         per_device_train_batch_size=configs["training_hyperparams"]["batch_size"],
++        gradient_accumulation_steps=configs["training_hyperparams"]["gradient_accumulation_steps"],
+         per_device_eval_batch_size=configs["training_hyperparams"]["batch_size"],
+         fp16=configs["training_hyperparams"]["fp16"],
+         group_by_length=True,
+@@ -294,6 +295,7 @@ def train_seq2seq_model(
+ 
+     # Run training
+     trainer.train()
++    trainer.save_model(output_dir)
+ 
+     return None
+ 

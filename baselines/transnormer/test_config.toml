@@ -1,0 +1,35 @@
+# -*- coding = utf-8 -*-
+
+# Select GPU
+gpu = "cuda:0"  # when you did `export CUDA_VISIBLE_DEVICES=1` first
+
+# Random seed (fix for reproducibility)
+random_seed = 42
+
+[data]
+path_test = "/dataset/test.transnormer.jsonl"
+# n_examples_test = 24
+
+[tokenizer]
+checkpoint_in = "google/byt5-small"
+
+[tokenizer_configs]
+padding="longest" # pad to the longest sequence in batch
+truncation=false
+# max_length = None
+
+[model]
+checkpoint =  "/model"
+
+[generation]
+batch_size = 8
+
+[generation_config]
+# See here for more options: https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig
+max_new_tokens = 2048
+early_stopping = true
+length_penalty = 2.0 # length_penalty > 0.0 promotes longer sequences
+num_beams = 4
+decoder_start_token_id = 0
+eos_token_id = 1
+pad_token_id = 0
