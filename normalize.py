@@ -60,7 +60,7 @@ def main():
     parser.add_argument('--alpha', type=float, default=0.55)
     parser.add_argument('--beta', type=float, default=1.1)
     parser.add_argument('--input_file', type=str, required=True, default='-')
-    parser.add_argument('--output_file', type=argparse.FileType('r'), default=sys.stdout)
+    parser.add_argument('--output_file', type=argparse.FileType('w'), default=sys.stdout)
     parser.add_argument('--output_text', action='store_true')
 
     args = parser.parse_args()
@@ -119,7 +119,11 @@ def main():
         oov_replacement_probabilities = {orig_type: [(orig_type, 1)] for orig_type in oov_types}
 
     def print_result(tokens):
-        print(tokens_to_string(recombine_tokens(tokens)), file=args.output_file)
+        if args.output_text:
+            print(tokens_to_string(recombine_tokens(tokens)), file=args.output_file)
+        else:
+            for tok in tokens:
+                print(tok, file=args.output_file)
 
     if args.no_language_model:
         logger.info('return the maximum prior normalization without language-model reranking')
@@ -136,6 +140,8 @@ def main():
             print_result(pred)
     else:
         logger.info('reranking normalization hypotheses with the language model')
+        if torch.cuda.is_available():
+            language_model.cuda()
         for orig_sent in tqdm(input_dataset):
             if len(language_model_tokenizer(make_tokens_to_llm_string(orig_sent))['input_ids']) + 50 > language_model_tokenizer.model_max_length:
                 logger.info('sentence too long, giving up')
