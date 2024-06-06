@@ -34,6 +34,7 @@ def recombine_tokens(toks):
     text = MERGE_MARKS.sub('', text)
     return text.split(' ')
 
+# TODO replace with Yannics detokenizer
 def tokens_to_string(toks):
     toks = [' ' + tok if not starts_punct.match(tok) else tok for tok in toks]
 
@@ -75,11 +76,11 @@ def xml_to_samples(filename):
                 tokens_orig.append(tok.get('old'))
                 tokens_norm.append(tok.get('new').replace(' ', '▁'))
 
-        tokens_orig = list(map(german_transliterate, tokens_orig))
-        tokens_norm = list(map(german_transliterate, tokens_norm))
+        # tokens_orig = list(map(german_transliterate, tokens_orig))
+        # tokens_norm = list(map(german_transliterate, tokens_norm))
 
         trans = {'orig': tokens_to_string(tokens_orig), 'norm': tokens_to_string(recombine_tokens(tokens_norm))}
-        tokens = {'orig': tokens_orig, 'norm': tokens_norm}
+        tokens = {'orig': list(map(german_transliterate, tokens_orig)), 'norm': list(map(german_transliterate, tokens_norm))}
 
         if not (
                 all(re.fullmatch(r'[^ ▁░]+', tok) for tok in tokens['orig'])
