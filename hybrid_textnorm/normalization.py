@@ -8,22 +8,24 @@ from hybrid_textnorm.beam_search import beam_search
 
 
 def predict_type_normalization(types, type_model_tokenizer, type_model, batch_size=64, num_return_sequences=4, num_beams=4):
-    dev_oov_types_tokenized = [{'input_ids': type_model_tokenizer(type)['input_ids']} for type in types]
+    types = list(types)
+    dev_oov_types_tokenized = [{'input_ids': type_model_tokenizer(type)['input_ids'], 'index': i} for i, type in enumerate(types)]
     data_collator = DataCollatorForSeq2Seq(tokenizer=type_model_tokenizer, model=type_model)
     data_loader = DataLoader(dev_oov_types_tokenized, batch_size=batch_size, collate_fn=data_collator)
 
 
     for batch in data_loader:
         type_model.eval()
-        batch_inputs = type_model_tokenizer.batch_decode(batch['input_ids'], skip_special_tokens=True)
+        indices = batch['index']
         with torch.no_grad():
             del batch['labels']
+            del batch['index']
             model_output = type_model.generate(**batch.to(type_model.device), num_return_sequences=num_return_sequences, num_beams=num_beams, return_dict_in_generate=True, output_scores=True)
             pred = type_model_tokenizer.batch_decode(model_output.sequences, skip_special_tokens=True)
         pred_logits = type_model.compute_transition_scores(model_output.sequences, model_output.scores, model_output.beam_indices,
                                                           normalize_logits=False).sum(axis=1).cpu()
 
-        for i, orig_tok in enumerate(batch_inputs):
+        for i in range(len(indices)):
            probas = dict(
                (norm_tok, norm_proba) for norm_tok, norm_proba in zip(
                    pred[num_return_sequences * i:num_return_sequences * (i + 1)],
@@ -35,7 +37,7 @@ def predict_type_normalization(types, type_model_tokenizer, type_model, batch_si
            it = sorted(probas.items(), key=lambda x: x[0])
            grouper = more_itertools.groupby_transform(it, lambda x: x[0], lambda x: x[1])
            probas = {(k, sum(v)) for k, v in grouper}
-           yield orig_tok, probas
+           yield types[indices[i]], probas
 
 def reranked_normalization(orig_tokens, train_lexicon, type_repacement_probabilities, llm_tokenizer, llm_model, alpha=1, beta=1, **kwargs):
     trans = str.maketrans("", "", '░▁')
