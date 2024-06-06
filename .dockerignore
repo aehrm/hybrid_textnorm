@@ -1,5 +1,6 @@
 .dockerignore
 Dockerfile
 dataset
+baselines
 model*
 .venv
