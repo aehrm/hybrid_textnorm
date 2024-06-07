@@ -1,5 +1,7 @@
 import operator
 
+# Adapted code from Bawden et al.: https://github.com/rbawden/ModFr-Norm/blob/main/eval-scripts/wedit_distance_align.py
+
 def _wedit_dist_init(len1, len2):
     lev = []
     for i in range(len1):

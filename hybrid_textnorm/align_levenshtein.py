@@ -1,8 +1,7 @@
 from hybrid_textnorm.wedit_distance_align import wedit_distance_align
-import pickle
-import os
 import regex as re
 
+# Adapted code from Bawden et al.: https://github.com/rbawden/ModFr-Norm/blob/main/eval-scripts/align_levenshtein.py
 
 def align_token_sequences(tokens_src, tokens_tgt, homogenise=None):
     if homogenise is None:
@@ -42,7 +41,7 @@ def align_token_sequences(tokens_src, tokens_tgt, homogenise=None):
     recovered2 = re.sub(' +', ' ', ' '.join([x[1] for x in alignment]))
 
     assert recovered1 == re.sub(' +', ' ', str_src), \
-        '\n' + re.sub(' +', ' ', recovered1) + "\n" + re.sub(' +', ' ', str_tgt)
+        '\n' + re.sub(' +', ' ', recovered1) + "\n" + re.sub(' +', ' ', str_src)
     assert re.sub('[░▁ ]+', '', recovered2) == re.sub('[▁ ]+', '', str_tgt), recovered2 + " / " + str_tgt
 
     assert [x[0] for x in alignment] == tokens_src

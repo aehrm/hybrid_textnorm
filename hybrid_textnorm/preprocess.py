@@ -14,6 +14,8 @@ from lxml import etree
 import more_itertools
 from tqdm import tqdm
 
+from hybrid_textnorm.align_levenshtein import align_token_sequences
+
 logger = logging.getLogger(__name__)
 
 SPACE = re.compile(r'[ ▁]+')
@@ -66,12 +68,10 @@ def xml_to_samples(filename):
         tokens_norm = []
         for tok in tokens:
             if tok.get('class', None) == 'JOIN':
-                for _, is_last, subtok in more_itertools.mark_ends(tok):
-                    tokens_orig.append(subtok.get('old'))
-                    if not is_last:
-                        tokens_norm.append(subtok.get('new') + '░')
-                    else:
-                        tokens_norm.append(subtok.get('new'))
+                alignment = align_token_sequences(tok.get('old').split(' '), [tok.get('new')])
+                for orig_subtok, norm_subtok in alignment:
+                    tokens_orig.append(orig_subtok)
+                    tokens_norm.append(norm_subtok)
             else:
                 tokens_orig.append(tok.get('old'))
                 tokens_norm.append(tok.get('new').replace(' ', '▁'))
@@ -87,6 +87,7 @@ def xml_to_samples(filename):
                 and all(re.fullmatch(r'[^ ]+░?', tok) for tok in tokens['norm'])
                 and re.fullmatch(r'[^▁░]+', trans['orig'])
                 and re.fullmatch(r'[^▁░]+', trans['norm'])
+                and all(re.search(r'\p{Ll}\p{Lu}', tok) is None for tok in tokens['norm'])
         ):
             logger.warning(
                 f'Something very bad happened while processing sentence #{sentence_id}; check source xml {filename}\n'
@@ -97,6 +98,7 @@ def xml_to_samples(filename):
         assert all(re.fullmatch(r'[^ ]+░?', tok) for tok in tokens['norm'])
         assert re.fullmatch(r'[^▁░]+', trans['orig'])
         assert re.fullmatch(r'[^▁░]+', trans['norm'])
+        assert all(re.search(r'\p{Ll}\p{Lu}', tok) is None for tok in tokens['norm'])
 
         yield {'translation': trans, 'tokens': tokens, 'filename': Path(f.name).name, 'sentence_id': sentence_id}
 
