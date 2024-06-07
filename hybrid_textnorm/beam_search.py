@@ -65,7 +65,7 @@ def generate_word_segmentation(template_tokens):
         yield accum
 
 
-def beam_search(constraint_seq, model, tokenizer, num_beams=8, max_fan_out=8, batch_size=8):
+def beam_search(constraint_seq, model, tokenizer, num_beams=4, max_fan_out=8, batch_size=8):
     template_tokens = [[tok for tok, logprob in x] for x in constraint_seq]
     template_logprobs = [[logprob for tok, logprob in x] for x in constraint_seq]
 

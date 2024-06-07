@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--char_vocab', action='store_true', help='Use alphabet as vocabulary (default: False)')
     parser.add_argument('--vocab_size', type=int, default=200, help='Vocabulary size (default: %(default)s)')
     parser.add_argument('--d_model', type=int, default=512, help='Dimension of model (default: %(default)s)')
-    parser.add_argument('--ffn_dim', type=int, default=1024,
+    parser.add_argument('--ffn_dim', type=int, default=2048,
                         help='Dimension of feed-forward network (default: %(default)s)')
     parser.add_argument('--encoder_layers', type=int, default=6, help='Number of encoder layers (default: %(default)s)')
     parser.add_argument('--encoder_attention_heads', type=int, default=8,
@@ -54,7 +54,7 @@ def main():
                         help='Batch size for training (default: %(default)s)')
     parser.add_argument('--eval_batch_size', type=int, default=64,
                         help='Batch size for evaluation (default: %(default)s)')
-    parser.add_argument('--num_epochs', type=int, default=5, help='Number of training epochs (default: %(default)s)')
+    parser.add_argument('--num_epochs', type=int, default=10, help='Number of training epochs (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -159,7 +159,7 @@ def main():
                                     i not in split_lexicons['train'].keys()]),
             "gen_len": np.mean(prediction_lens)
         }
-        result = {k: round(v, 4) for k, v in result.items()}
+        result = {k: round(v, 8) for k, v in result.items()}
         return result
 
     training_args = Seq2SeqTrainingArguments(
