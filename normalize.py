@@ -122,15 +122,22 @@ def main():
         if args.output_text:
             print(tokens_to_string(recombine_tokens(tokens)), file=args.output_file)
         else:
-            for tok in tokens:
-                print(tok, file=args.output_file)
+            print(' '.join(tokens), file=args.output_file)
 
+
+    do_rerank = True
     if args.no_language_model:
-        logger.info('return the maximum prior normalization without language-model reranking')
+        do_rerank = False
+    if args.alpha == 0 and args.beta == 0:
+        logger.warning('parameters alpha and beta set to 0, thus language model reranking has no effect; will not run the language model')
+        do_rerank = False
+
+    if not do_rerank:
+        logger.info('return the maximum prior normalization without language model reranking')
         for orig_sent in tqdm(input_dataset):
             pred = []
             for orig_tok in orig_sent:
-                if orig_tok not in train_lexicon.keys():
+                if orig_tok in train_lexicon.keys():
                     pred.append(train_lexicon[orig_tok].most_common(1)[0][0])
                 else:
                     replacements = oov_replacement_probabilities[orig_tok]
@@ -148,7 +155,7 @@ def main():
                 print_result(orig_sent)
                 continue
 
-            predictions = reranked_normalization(orig_sent, train_lexicon, oov_replacement_probabilities, language_model_tokenizer, language_model, alpha=args.alpha, beta=args.beta, num_beams=4, batch_size=args.language_model_batch_size)
+            predictions = reranked_normalization(orig_sent, train_lexicon, oov_replacement_probabilities, language_model_tokenizer, language_model, alpha=args.alpha, beta=args.beta, batch_size=args.language_model_batch_size)
             best_pred, _, _, _ = predictions[0]
             print_result(best_pred)
 
