@@ -44,10 +44,11 @@ checkpoint_encoder_decoder = "google/byt5-small"
 # checkpoint_decoder = "bert-base-multilingual-cased"
 
 [training_hyperparams]
-batch_size = 4
-gradient_accumulation_steps = 2
-epochs = 5
-learning_rate = 0.001
+output_dir = "/model"
+batch_size = 2
+gradient_accumulation_steps = 4
+epochs = 4
+learning_rate = 0.00005
 fp16 = false
 save_strategy = "epoch"
 eval_strategy = "epoch"

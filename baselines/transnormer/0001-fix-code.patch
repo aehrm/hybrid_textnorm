@@ -2,15 +2,20 @@ diff --git a/src/transnormer/models/train_model.py b/src/transnormer/models/trai
 index 6fb6182..50b4726 100644
 --- a/src/transnormer/models/train_model.py
 +++ b/src/transnormer/models/train_model.py
-@@ -257,6 +257,7 @@ def train_seq2seq_model(
-         predict_with_generate=True,
+@@ -254,9 +254,11 @@ def train_seq2seq_model(
+     # Set-up training arguments from hyperparameters
+     training_args = transformers.Seq2SeqTrainingArguments(
+         output_dir=output_dir,
+-        predict_with_generate=True,
++        #predict_with_generate=True,
          num_train_epochs=configs["training_hyperparams"]["epochs"],
          per_device_train_batch_size=configs["training_hyperparams"]["batch_size"],
 +        gradient_accumulation_steps=configs["training_hyperparams"]["gradient_accumulation_steps"],
++        log_level="info",
          per_device_eval_batch_size=configs["training_hyperparams"]["batch_size"],
          fp16=configs["training_hyperparams"]["fp16"],
          group_by_length=True,
-@@ -294,6 +295,7 @@ def train_seq2seq_model(
+@@ -294,6 +296,7 @@ def train_seq2seq_model(
  
      # Run training
      trainer.train()
@@ -18,3 +23,12 @@ index 6fb6182..50b4726 100644
  
      return None
  
+@@ -310,7 +313,7 @@ if __name__ == "__main__":
+     # Load configs
+     with open(CONFIGFILE, mode="rb") as fp:
+         CONFIGS = tomli.load(fp)
+-    MODELDIR = os.path.join(ROOT, "./models/model")
++    MODELDIR = CONFIGS["training_hyperparams"]["output_dir"]
+ 
+     # Fix seeds for reproducibilty
+     random.seed(CONFIGS["random_seed"])
