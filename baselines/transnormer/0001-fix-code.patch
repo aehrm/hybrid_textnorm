@@ -32,3 +32,18 @@ index 6fb6182..50b4726 100644
  
      # Fix seeds for reproducibilty
      random.seed(CONFIGS["random_seed"])
+diff --git a/src/transnormer/models/generate.py b/src/transnormer/models/generate.py
+index 5c59e71..d1bc4eb 100644
+--- a/src/transnormer/models/generate.py
++++ b/src/transnormer/models/generate.py
+@@ -149,7 +149,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
+     ds["train"] = ds["train"].remove_columns(index_column)
+ 
+     # (7) Save outputs
+-    ds["train"].to_json(args.out, force_ascii=False)
++    with open(args.out, 'w') as f:
++        for row in ds["train"]:
++            print(row["pred"], file=f)
+ 
+ 
+ if __name__ == "__main__":
