@@ -87,8 +87,8 @@ def main():
             cognate_pairs = list(
                 itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
 
-            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser.orig')
-            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser.norm')
+            write_token_lines([orig for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser_token.orig')
+            write_token_lines([norm for orig, norm in cognate_pairs], args.output_path / f'{split}.csmtiser_token.norm')
 
         # csmtiser with subsampled dev set, sentence-level
         for split, split_dataset in dataset.items():
