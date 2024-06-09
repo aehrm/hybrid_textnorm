@@ -11,14 +11,15 @@ from somajo import SoMaJo
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 
-import regex as re
-
 from hybrid_textnorm.beam_search import make_tokens_to_llm_string
+from hybrid_textnorm.detokenizer import DtaEvalDetokenizer
 from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization
-from hybrid_textnorm.preprocess import german_transliterate, recombine_tokens, tokens_to_string
+from hybrid_textnorm.preprocess import german_transliterate, recombine_tokens
 
 logger = logging.getLogger(__name__)
+
+DETOKENIZER = DtaEvalDetokenizer()
 
 def load_input(input_file, do_tokenize=False):
     if input_file.endswith('.jsonl'):
@@ -120,7 +121,7 @@ def main():
 
     def print_result(tokens):
         if args.output_text:
-            print(tokens_to_string(recombine_tokens(tokens)), file=args.output_file)
+            print(DETOKENIZER.detokenize(recombine_tokens(tokens)), file=args.output_file)
         else:
             print(' '.join(tokens), file=args.output_file)
 

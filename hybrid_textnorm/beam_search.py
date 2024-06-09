@@ -4,12 +4,14 @@ import regex as re
 from torch.utils.data import DataLoader
 from transformers import DataCollatorForSeq2Seq
 
-from hybrid_textnorm.preprocess import tokens_to_string, recombine_tokens
+from hybrid_textnorm.detokenizer import DtaEvalDetokenizer
+from hybrid_textnorm.preprocess import recombine_tokens
 
 QUOT_MARKS = re.compile(r'["„“()]')
+DETOKENIZER = DtaEvalDetokenizer()
 
 def make_tokens_to_llm_string(hyp_tokens):
-    hyp_str = tokens_to_string(recombine_tokens(hyp_tokens))
+    hyp_str = DETOKENIZER.detokenize(recombine_tokens(hyp_tokens))
     hyp_str = QUOT_MARKS.sub('', hyp_str)
     return hyp_str
 

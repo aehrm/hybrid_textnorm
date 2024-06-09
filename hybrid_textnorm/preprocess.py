@@ -15,13 +15,14 @@ import more_itertools
 from tqdm import tqdm
 
 from hybrid_textnorm.align_levenshtein import align_token_sequences
+from hybrid_textnorm.detokenizer import DtaEvalDetokenizer
 
 logger = logging.getLogger(__name__)
 
 SPACE = re.compile(r'[ ▁]+')
 MERGE_MARKS = re.compile(r'░+ *')
 
-starts_punct = re.compile(r'^\p{Punct}')
+DETOKENIZER = DtaEvalDetokenizer()
 
 def german_transliterate(s):
     return s.replace('ſ', 's') \
@@ -36,11 +37,6 @@ def recombine_tokens(toks):
     text = MERGE_MARKS.sub('', text)
     return text.split(' ')
 
-# TODO replace with Yannics detokenizer
-def tokens_to_string(toks):
-    toks = [' ' + tok if not starts_punct.match(tok) else tok for tok in toks]
-
-    return ''.join(toks).strip()
 
 def xml_to_samples(filename):
     f = open(filename)
@@ -76,10 +72,8 @@ def xml_to_samples(filename):
                 tokens_orig.append(tok.get('old'))
                 tokens_norm.append(tok.get('new').replace(' ', '▁'))
 
-        # tokens_orig = list(map(german_transliterate, tokens_orig))
-        # tokens_norm = list(map(german_transliterate, tokens_norm))
 
-        trans = {'orig': tokens_to_string(tokens_orig), 'norm': tokens_to_string(recombine_tokens(tokens_norm))}
+        trans = {'orig': DETOKENIZER.detokenize(tokens_orig), 'norm': DETOKENIZER.detokenize(recombine_tokens(tokens_norm))}
         tokens = {'orig': list(map(german_transliterate, tokens_orig)), 'norm': list(map(german_transliterate, tokens_norm))}
 
         if not (
