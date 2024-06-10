@@ -106,7 +106,8 @@ def main():
     translation_dataset_tokenized = translation_dataset.map(preprocess_dataset, batched=True)
 
     # initialize model.
-    set_seed(1234)
+    seed = 12345
+    set_seed(seed)
     config = BartConfig(vocab_size=tokenizer.vocab_size,
                         activation_function="gelu",
                         d_model=args.d_model,
@@ -169,6 +170,7 @@ def main():
         per_device_eval_batch_size=args.eval_batch_size,
         gradient_accumulation_steps=1,
         num_train_epochs=args.num_epochs,
+        seed=seed,
         predict_with_generate=True,
         log_level='info',
         logging_strategy="steps",
