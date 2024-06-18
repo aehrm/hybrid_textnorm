@@ -24,4 +24,5 @@ docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/out
 docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/output:/output ehrmanntraut/csmtiser_sentence
 
 poetry run python baselines/cab/fetch_cab_normalization.py
+poetry run python baselines/cab/fetch_cab_normalization.py --disable-exlex
 ```
