@@ -38,8 +38,8 @@ def main():
                         help='Path to evaluation file (default: %(default)s')
     parser.add_argument('--output_dir', type=str, default='model_output',
                         help='Path to model output directory (default: %(default)s)')
-    parser.add_argument('--char_vocab', action='store_true', help='Use alphabet as vocabulary (default: False)')
-    parser.add_argument('--vocab_size', type=int, default=200, help='Vocabulary size (default: %(default)s)')
+    parser.add_argument('--char_vocab', default=True, action=argparse.BooleanOptionalAction, help='Use alphabet as vocabulary (default: False)')
+    parser.add_argument('--vocab_size', type=int, help='Vocabulary size, requires --no-char_vocab')
     parser.add_argument('--d_model', type=int, default=512, help='Dimension of model (default: %(default)s)')
     parser.add_argument('--ffn_dim', type=int, default=2048,
                         help='Dimension of feed-forward network (default: %(default)s)')
@@ -49,14 +49,18 @@ def main():
     parser.add_argument('--decoder_layers', type=int, default=6, help='Number of decoder layers (default: %(default)s)')
     parser.add_argument('--decoder_attention_heads', type=int, default=8,
                         help='Number of decoder attention heads (default: %(default)s)')
-    parser.add_argument('--learning_rate', type=float, default=5e-5, help='Learning rate (default: %(default)s)')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate (default: %(default)s)')
     parser.add_argument('--train_batch_size', type=int, default=8,
                         help='Batch size for training (default: %(default)s)')
     parser.add_argument('--eval_batch_size', type=int, default=64,
                         help='Batch size for evaluation (default: %(default)s)')
-    parser.add_argument('--num_epochs', type=int, default=10, help='Number of training epochs (default: %(default)s)')
+    parser.add_argument('--num_epochs', type=int, default=20, help='Number of training epochs (default: %(default)s)')
 
     args = parser.parse_args()
+
+    if args.char_vocab and args.vocab_size:
+        logger.error('Options --char_vocab and --vocab_size cannot be specified together!')
+        sys.exit(1)
 
     # set up datasets
     if args.train_file.endswith('jsonl'):
