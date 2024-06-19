@@ -13,7 +13,7 @@ from datasets import load_dataset, Dataset
 
 from hybrid_textnorm.align_levenshtein import align_token_sequences
 from hybrid_textnorm.lexicon import Lexicon
-from hybrid_textnorm.metrics import word_accuracy
+from hybrid_textnorm.metrics import word_accuracy, cerI
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -92,6 +92,18 @@ def besttype_prediction(orig_tokens, gold_tokens):
     return output
 
 
+def calc_metrics(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
+    wordacc = word_accuracy(gold_tokens=gold_tokens,
+                            pred_tokens=pred_tokens,
+                            train_vocab_tokens=train_vocab_tokens,
+                            orig_tokens=orig_tokens)
+    ceri = cerI(gold_tokens=gold_tokens,
+                            pred_tokens=pred_tokens,
+                            train_vocab_tokens=train_vocab_tokens,
+                            orig_tokens=orig_tokens)
+
+    return [wordacc['overall'], wordacc['invocab'], wordacc['oov'], ceri['overall']]
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -111,25 +123,24 @@ def main():
 
     trans = str.maketrans("", "", '░▁')
     is_punct = re.compile(r'\p{Punct}+')
-    def equality(gold, pred):
-        if args.ignore_punct and is_punct.fullmatch(gold):
-            return True
-        if args.ignore_case:
-            gold = gold.lower()
-            pred = pred.lower()
-        if args.ignore_space:
-            gold = gold.translate(trans)
-            pred = pred.translate(trans)
-        return gold == pred
-            
-        
+    def map_tokens(tokens, gold_tokens):
+        for token, gold in zip(tokens, gold_tokens):
+            if args.ignore_punct and is_punct.fullmatch(gold):
+                # if we ignore punctuation, we assume that the system makes a perfect prediction
+                yield gold
+            else:
+                if args.ignore_case:
+                    token = token.lower()
+                if args.ignore_space:
+                    token = token.translate(trans)
+                yield token
 
     logger.info('loading ref file')
     ref_sentences = list(read_file_sentences(args.ref_file, dataset_token_field='norm'))
 
     train_vocab = None
     orig_sentences = None
-    columns = ['word_acc']
+    columns = ['word_acc', 'cerI']
     if (args.lexicon_dataset_name or args.lexicon_file) and args.orig_file:
         logger.info('loading train lexicon')
         if args.lexicon_file:
@@ -139,7 +150,7 @@ def main():
 
         logger.info('loading orig file')
         orig_sentences = list(read_file_sentences(args.orig_file, dataset_token_field='orig'))
-        columns = ['word_acc', 'word_acc_invocab', 'word_acc_oov']
+        columns = ['word_acc', 'word_acc_invocab', 'word_acc_oov', 'cerI']
 
     ljust = max(len(Path(x).name) for x in args.input_file) + 4
     print(''.ljust(ljust), *[c.rjust(18) for c in columns])
@@ -147,29 +158,30 @@ def main():
     ref_tokens = list(itertools.chain.from_iterable(ref_sentences))
     orig_tokens = list(itertools.chain.from_iterable(orig_sentences)) if orig_sentences is not None else None
 
+    # pre-process tokens to fit the desired evaluation type
+    ref_tokens = list(map_tokens(ref_tokens, ref_tokens))
+
     if orig_tokens:
-        identity_metrics = word_accuracy(gold_tokens=ref_tokens,
+        identity_metrics = calc_metrics(gold_tokens=ref_tokens,
                                          pred_tokens=orig_tokens,
                                          train_vocab_tokens=train_vocab,
-                                         orig_tokens=orig_tokens,
-                                         equality=equality)
+                                         orig_tokens=orig_tokens)
         print('identity'.ljust(ljust), *[f"{m: 18.5f}" for m in identity_metrics])
 
-        besttype_metrics = word_accuracy(gold_tokens=ref_tokens,
+        besttype_metrics = calc_metrics(gold_tokens=ref_tokens,
                                          pred_tokens=besttype_prediction(orig_tokens, ref_tokens),
                                          train_vocab_tokens=train_vocab,
-                                         orig_tokens=orig_tokens,
-                                         equality=equality)
+                                         orig_tokens=orig_tokens)
         print('besttype'.ljust(ljust), *[f"{m: 18.5f}" for m in besttype_metrics])
 
     for filename in args.input_file:
         predicted_sentences = list(tqdm(read_file_sentences(filename, align=args.align, ref_sentences=ref_sentences), total=len(ref_sentences), leave=False))
         pred_tokens = list(itertools.chain.from_iterable(predicted_sentences))
-        metrics = word_accuracy(gold_tokens=ref_tokens,
+        pred_tokens = list(map_tokens(pred_tokens, ref_tokens))
+        metrics = calc_metrics(gold_tokens=ref_tokens,
                                 pred_tokens=pred_tokens,
                                 train_vocab_tokens=train_vocab,
-                                orig_tokens=orig_tokens,
-                                equality=equality)
+                                orig_tokens=orig_tokens)
 
         print(f'{Path(filename).name.ljust(ljust)}', *[f"{m: 18.5f}" for m in metrics])
 

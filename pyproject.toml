@@ -6,7 +6,7 @@ authors = ["Anton Ehrmanntraut <anton.ehrmanntraut@uni-wuerzburg.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 regex = "^2024.5.15"
 lxml = "^5.2.2"
 datasets = "^2.19.1"
@@ -17,6 +17,7 @@ transformers = {extras = ["torch"], version = "^4.41.2"}
 torch = "^2.3.0"
 somajo = "^2.4.2"
 nltk = "^3.8.1"
+levenshtein = "^0.25.1"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,40 +1,41 @@
+import itertools
+
+import Levenshtein
 import numpy as np
 
 
-def word_accuracy(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None, equality=None):
-    if equality is None:
-        equality = lambda x,y: x==y
-    total_word_acc = np.mean([equality(gold,pred) for gold, pred in zip(gold_tokens, pred_tokens)])
+def word_accuracy(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
+    total_word_acc = np.mean([gold == pred for gold, pred in zip(gold_tokens, pred_tokens)])
     if train_vocab_tokens is None:
-        return total_word_acc
+        return {'overall': total_word_acc}
     else:
-        invocab_word_acc = np.mean([equality(gold,pred) for gold, pred, orig in zip(gold_tokens, pred_tokens, orig_tokens) if orig in train_vocab_tokens])
-        oov_word_acc = np.mean([equality(gold,pred) for gold, pred, orig in zip(gold_tokens, pred_tokens, orig_tokens) if orig not in train_vocab_tokens])
-        return total_word_acc, invocab_word_acc, oov_word_acc
+        invocab_word_acc = np.mean([gold == pred for gold, pred, orig in zip(gold_tokens, pred_tokens, orig_tokens) if orig in train_vocab_tokens])
+        oov_word_acc = np.mean([gold == pred for gold, pred, orig in zip(gold_tokens, pred_tokens, orig_tokens) if orig not in train_vocab_tokens])
+        return {'overall': total_word_acc, 'invocab': invocab_word_acc, 'oov': oov_word_acc}
 
-def metrics_summary(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
-    trans = str.maketrans("", "", '░▁')
+def cerI(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
+    if orig_tokens is None:
+        orig_tokens = []
 
-    output = {}
-    for mapper_type in ['full', 'space_insensitive', 'case_insensitive', 'space_case_insensitive']:
-        out = {}
-        mapper = None
-        if mapper_type == 'space_insensitive':
-            mapper = lambda x: x.translate(trans)
-        if mapper_type == 'space_insensitive':
-            mapper = lambda x: x.lower()
-        if mapper_type == 'space_case_insensitive':
-            mapper = lambda x: x.lower().translate(trans)
+    cerI_values = []
+    cerI_invocab = []
+    cerI_oov = []
+    for gold, pred, orig in itertools.zip_longest(gold_tokens, pred_tokens, orig_tokens):
+        if gold == pred:
+            continue
 
-        acc = word_accuracy(gold_tokens, pred_tokens, train_vocab_tokens, orig_tokens, mapper)
-        if type(acc) == tuple:
-            total_word_acc, invocab_word_acc, oov_word_acc = acc
-            out['word_acc'] = total_word_acc
-            out['word_acc_invocab'] = invocab_word_acc
-            out['word_acc_oov'] = oov_word_acc
-        else:
-            out['word_acc'] = acc
-        output[mapper_type] = out
+        dist = Levenshtein.distance(gold, pred)
+        cer = dist / len(gold)
+        cerI_values.append(cer)
 
-    return output
+        if orig is not None:
+            if orig in train_vocab_tokens:
+                cerI_invocab.append(cer)
+            else:
+                cerI_oov.append(cer)
 
+
+    if train_vocab_tokens is None:
+        return {'overall': np.mean(cerI_values)}
+    else:
+        return {'overall': np.mean(cerI_values), 'invocab': np.mean(cerI_invocab), 'oov': np.mean(cerI_oov)}
