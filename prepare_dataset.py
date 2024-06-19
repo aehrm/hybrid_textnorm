@@ -82,7 +82,7 @@ def main():
         # csmtiser with subsampled dev set, token-level
         for split, split_dataset in dataset.items():
             if split == 'dev':
-                split_dataset = split_dataset.shuffle(seed=1234).select(range(300))
+                split_dataset = split_dataset.shuffle(seed=1234).filter(lambda x: len(x['tokens']['orig']) < 200).select(range(500))
 
             cognate_pairs = list(
                 itertools.chain.from_iterable(zip(sent['orig'], sent['norm']) for sent in split_dataset['tokens']))
@@ -93,7 +93,7 @@ def main():
         # csmtiser with subsampled dev set, sentence-level
         for split, split_dataset in dataset.items():
             if split == 'dev':
-                split_dataset = split_dataset.shuffle(seed=1234).select(range(300))
+                split_dataset = split_dataset.shuffle(seed=1234).filter(lambda x: len(x['tokens']['orig']) < 200).select(range(500))
 
             write_token_lines([' '.join(recombine_tokens(sent['tokens']['orig'])) for sent in split_dataset], args.output_path / f'{split}.csmtiser_sent.orig')
             write_token_lines([' '.join(recombine_tokens(sent['tokens']['norm'])) for sent in split_dataset], args.output_path / f'{split}.csmtiser_sent.norm')
