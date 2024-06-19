@@ -117,6 +117,7 @@ def main():
     parser.add_argument('--ignore_case', default=False)
     parser.add_argument('--ignore_space', default=False)
     parser.add_argument('--align', default='auto', const='auto', nargs='?', choices=['auto', 'never', 'always'])
+    parser.add_argument('--output-csv', action='store_true')
 
     args = parser.parse_args()
     logger.setLevel(logging.INFO)
@@ -152,39 +153,50 @@ def main():
         orig_sentences = list(read_file_sentences(args.orig_file, dataset_token_field='orig'))
         columns = ['word_acc', 'word_acc_invocab', 'word_acc_oov', 'cerI']
 
-    ljust = max(len(Path(x).name) for x in args.input_file) + 4
-    print(''.ljust(ljust), *[c.rjust(18) for c in columns])
-
     ref_tokens = list(itertools.chain.from_iterable(ref_sentences))
     orig_tokens = list(itertools.chain.from_iterable(orig_sentences)) if orig_sentences is not None else None
 
     # pre-process tokens to fit the desired evaluation type
     ref_tokens = list(map_tokens(ref_tokens, ref_tokens))
 
+    output_df = pandas.DataFrame(columns=columns)
     if orig_tokens:
+        logger.info('evaluating identity')
         identity_metrics = calc_metrics(gold_tokens=ref_tokens,
                                          pred_tokens=orig_tokens,
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
-        print('identity'.ljust(ljust), *[f"{m: 18.5f}" for m in identity_metrics])
+        output_df.loc['identity'] = identity_metrics
 
+        logger.info('evaluating best theoret. type')
         besttype_metrics = calc_metrics(gold_tokens=ref_tokens,
                                          pred_tokens=besttype_prediction(orig_tokens, ref_tokens),
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
-        print('besttype'.ljust(ljust), *[f"{m: 18.5f}" for m in besttype_metrics])
+        output_df.loc['besttype'] = besttype_metrics
 
     for filename in args.input_file:
+        if filename.endswith('README.md'):
+            # this surely is not an evaluation file ...
+            logger.info(f'skipping {filename}')
+            continue
+
+        logger.info(f'evaluating {filename}')
         predicted_sentences = list(tqdm(read_file_sentences(filename, align=args.align, ref_sentences=ref_sentences), total=len(ref_sentences), leave=False))
         pred_tokens = list(itertools.chain.from_iterable(predicted_sentences))
+        # pre-process tokens to fit the desired evaluation type
         pred_tokens = list(map_tokens(pred_tokens, ref_tokens))
         metrics = calc_metrics(gold_tokens=ref_tokens,
                                 pred_tokens=pred_tokens,
                                 train_vocab_tokens=train_vocab,
                                 orig_tokens=orig_tokens)
 
-        print(f'{Path(filename).name.ljust(ljust)}', *[f"{m: 18.5f}" for m in metrics])
+        output_df.loc[Path(filename).name] = metrics
 
+    if args.output_csv:
+        print(output_df.to_csv())
+    else:
+        print(output_df.to_string())
 
 if __name__ == '__main__':
     main()
