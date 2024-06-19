@@ -28,6 +28,7 @@ def load_input(input_file, do_tokenize=False):
             yield row['tokens']['orig']
     else:
         if input_file == '-':
+            logger.info('reading from stdin')
             input_str = sys.stdin.read()
         else:
             with open(input_file, 'r') as f:
@@ -48,19 +49,20 @@ def load_input(input_file, do_tokenize=False):
 def main():
     parser = argparse.ArgumentParser()
 
+    # TODO add descriptions!
     parser.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica')
     parser.add_argument('--lexicon_file', type=str)
     parser.add_argument('--no_lexicon', action='store_true')
     parser.add_argument('--no_type_model', action='store_true')
     parser.add_argument('--no_language_model', action='store_true')
-    parser.add_argument('--do_tokenize', action='store_true')
+    parser.add_argument('--is_pretokenized', action='store_true')
     parser.add_argument('--type_model', type=str, default='aehrm/dtaec-type-normalizer')
     parser.add_argument('--type_model_batch_size', type=int, default=64)
     parser.add_argument('--language_model', type=str, default='dbmdz/german-gpt2')
     parser.add_argument('--language_model_batch_size', type=int, default=8)
     parser.add_argument('--alpha', type=float, default=0.5)
     parser.add_argument('--beta', type=float, default=0.5)
-    parser.add_argument('--input_file', type=str, required=True, default='-')
+    parser.add_argument('--input_file', type=str, default='-')
     parser.add_argument('--output_file', type=argparse.FileType('w'), default=sys.stdout)
     parser.add_argument('--output_text', action='store_true')
 
@@ -98,7 +100,7 @@ def main():
             language_model_tokenizer.add_special_tokens({'pad_token': '<pad>'})
 
     logger.info('collect input material')
-    input_dataset = list(load_input(args.input_file, do_tokenize=args.do_tokenize))
+    input_dataset = list(load_input(args.input_file, do_tokenize=not args.is_pretokenized))
 
     oov_types = set()
     for orig_sent in input_dataset:
