@@ -90,7 +90,7 @@ def main():
 
     language_model_tokenizer = None
     language_model = None
-    if not args.no_type_model:
+    if not args.no_language_model:
         logger.info('loading large language model')
         language_model_tokenizer = AutoTokenizer.from_pretrained(args.language_model)
         language_model = AutoModelForCausalLM.from_pretrained(args.language_model)
