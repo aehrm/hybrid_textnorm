@@ -42,7 +42,7 @@ def main():
 
     output_df = pandas.DataFrame()
 
-    parameters = [(a, a) for a in [0, 0.3, 0.32, 0.34, 0.36, 0.38, .4, .42, .44, .46, .48, .5, .52, .52, .54]]
+    parameters = [(a, a) for a in [0, 0.2, 0.4, 0.6, 0.8, 1.0, 2, 3, 4]]
     for i, (alpha, beta) in enumerate(parameters):
         gold_tokens = []
         pred_tokens = []
