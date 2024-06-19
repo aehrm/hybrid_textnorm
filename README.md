@@ -6,9 +6,13 @@ Huggingface repositories:
 * [DTA Parallel Corpus Lexica](https://huggingface.co/datasets/aehrm/dtaec-lexica)
 * [Type Normalization Transformer](https://huggingface.co/aehrm/dtaec-type-normalizer)
 
+The project uses poetry for dependency management. You can just run `poetry install` to install all dependencies.
+
+You may open a shell with `poetry shell` with all required python packages and interpreter. Alternatively, you can run scripts with the project-dependent python interpreter with `poetry run python <script.py>`.
+
 ## Quickstart
 
-1\. Clone and install the repository.
+1\. Clone the repository and install the dependencies.
 
 ```bash
 git clone https://github.com/aehrm/hybrid_textnorm
@@ -23,7 +27,30 @@ echo "Im Nothfall könnte ich bey meinen gelehrten Freunden eine Anleihe von Cit
 poetry run python normalize.py --input_file input_file
 ```
 
-## API Usage
+## Performance
+
+Scores on a test set of the pre-transliterated [DTA-EC parallel corpus](https://kaskade.dwds.de/~moocow/software/dtaec). 
+Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tokens are out-of-vocabulary
+(i.e. not seen in the training set).
+
+|                                                                   | **WordAcc** | **WordAcc (invocab)** | **WordAcc (oov)** | **CER<sub>I</sub>** |
+|:------------------------------------------------------------------|------------:|----------------------:|------------------:|--------------------:|
+| _Identity_                                                        |      96.513 |                97.015 |            83.912 |              20.715 |
+| _Best theoret. type map_                                          |      99.547 |                99.533 |            99.896 |              22.612 |
+| [Csmtiser](https://github.com/clarinsi/csmtiser) (sentence-level) |      98.928 |                99.317 |            89.160 |              21.151 |
+| [Csmtiser](https://github.com/clarinsi/csmtiser) (token-level)    |      98.940 |                99.321 |            89.369 |              19.997 |
+| [Norma](https://github.com/comphist/norma)                        |      96.834 |                99.477 |            30.521 |              23.392 |
+| [Transnormer](https://github.com/ybracke/transnormer)             |      98.979 |                99.271 |            91.653 |              24.937 |
+| hybrid_textnorm w/o LLM                                           |      99.111 |                99.481 |            89.823 |          **19.834** |
+| hybrid_textnorm                                                   |  **99.196** |            **99.495** |        **91.701** |              20.451 |
+
+## Usage
+
+Todo
+
+## API
+
+Todo
 
 ## Reproduction
 
