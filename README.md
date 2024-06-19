@@ -44,9 +44,45 @@ Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tok
 | hybrid_textnorm w/o LLM                                           |      99.111 |                99.481 |            89.823 |          **19.834** |
 | hybrid_textnorm                                                   |  **99.196** |            **99.495** |        **91.701** |              20.451 |
 
+
 ## Usage
 
-Todo
+```
+usage: normalize.py [-h]
+                    [--lexicon_dataset_name LEXICON_DATASET_NAME | --lexicon_file LEXICON_FILE | --no_lexicon]
+                    [--type_model TYPE_MODEL | --no_type_model]
+                    [--type_model_batch_size TYPE_MODEL_BATCH_SIZE]
+                    [--language_model LANGUAGE_MODEL | --no_language_model]
+                    [--language_model_batch_size LANGUAGE_MODEL_BATCH_SIZE] [--alpha ALPHA]
+                    [--beta BETA] [--is_pretokenized] [--input_file INPUT_FILE]
+                    [--output_file OUTPUT_FILE] [--output_text]
+
+options:
+  -h, --help            show this help message and exit
+  --lexicon_dataset_name LEXICON_DATASET_NAME
+                        Name of the dataset containing the lexicon (default: aehrm/dtaec-lexica)
+  --lexicon_file LEXICON_FILE
+                        JSON lexicon file
+  --no_lexicon          Do not use lexicon for normalization
+  --type_model TYPE_MODEL
+                        Type model to be used (default: aehrm/dtaec-type-normalizer).
+  --no_type_model       Do not use type model for normalization
+  --type_model_batch_size TYPE_MODEL_BATCH_SIZE
+                        Batch size for the type model (default: 64).
+  --language_model LANGUAGE_MODEL
+                        Language model to be used (default: dbmdz/german-gpt2)
+  --no_language_model   Do not use language model for normalization
+  --language_model_batch_size LANGUAGE_MODEL_BATCH_SIZE
+                        Batch size for the language model (default: 8)
+  --alpha ALPHA         Alpha parameter for model weighting (default: 0.5)
+  --beta BETA           Beta parameter for model weighting (default: 0.5)
+  --is_pretokenized     Supplied input is already whitespace-tokenized; skip tokenization
+  --input_file INPUT_FILE
+                        Input file path; use "-" for standard input (default: stdin)
+  --output_file OUTPUT_FILE
+                        Output file path; use "-" for standard output (default: stdout)
+  --output_text         Output will be formatted as recombined detokenized text
+```
 
 ## API
 
@@ -111,7 +147,7 @@ poetry run python baselines/cab/fetch_cab_normalization.py --disable-exlex
 
 ```bash
 poetry run python evaluate.py \
-    --ref_file dataset/processed/test.jsonl \
+    --gold_file dataset/processed/test.jsonl \
     --orig_file dataset/processed/test.jsonl \  # optional if you want oov results
     --lexicon_file dataset/processed/train.lexicon.jsonl \
     --input_file model_output/*.pred

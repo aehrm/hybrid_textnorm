@@ -21,11 +21,11 @@ logging.basicConfig(
 )
 
 
-def align_pred_sent_with_ref_sent(predicted_sent, ref_sent):
+def align_pred_sent_with_gold_sent(predicted_sent, gold_sent):
     original_spacing_tokens = []
     trans = str.maketrans("", "", '░▁')
-    for ref_tok in ref_sent:
-        original_spacing_tokens.append(ref_tok.translate(trans))
+    for gold_tok in gold_sent:
+        original_spacing_tokens.append(gold_tok.translate(trans))
 
     alignment = align_token_sequences(original_spacing_tokens, predicted_sent)
 
@@ -39,7 +39,7 @@ def align_pred_sent_with_ref_sent(predicted_sent, ref_sent):
     return new_pred_sent
 
 
-def read_file_sentences(filename, dataset_token_field=None, align='auto', ref_sentences=None):
+def read_file_sentences(filename, dataset_token_field=None, align='auto', gold_sentences=None):
     if filename.endswith('.jsonl'):
         ds = load_dataset('json', data_files=filename, split='train')
         for row in ds:
@@ -62,20 +62,20 @@ def read_file_sentences(filename, dataset_token_field=None, align='auto', ref_se
                     do_align = True
 
             if do_align:
-                assert len(lines) == len(ref_sentences)
+                assert len(lines) == len(gold_sentences)
                 ds = []
-                for line, ref_sent in zip(lines, ref_sentences):
+                for line, gold_sent in zip(lines, gold_sentences):
                     predicted_sent = line.strip().split(' ')
-                    ds.append({'predicted_sent': predicted_sent, 'ref_sent': ref_sent})
+                    ds.append({'predicted_sent': predicted_sent, 'gold_sent': gold_sent})
 
                 ds = Dataset.from_list(ds)
-                ds = ds.map(lambda x: {'aligned': align_pred_sent_with_ref_sent(x['predicted_sent'], x['ref_sent'])},
+                ds = ds.map(lambda x: {'aligned': align_pred_sent_with_gold_sent(x['predicted_sent'], x['gold_sent'])},
                             num_proc=4)
 
                 for row in ds:
                     aligned = row['aligned']
-                    ref_sent = row['ref_sent']
-                    assert len(aligned) == len(ref_sent)
+                    gold_sent = row['gold_sent']
+                    assert len(aligned) == len(gold_sent)
                     yield aligned
             else:
                 for line in lines:
@@ -108,16 +108,26 @@ def calc_metrics(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--ref_file', type=str, required=True)
-    parser.add_argument('--orig_file', type=str)
-    parser.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica')
-    parser.add_argument('--lexicon_file', type=str)
-    parser.add_argument('--input_file', type=str, required=True, nargs='+')
-    parser.add_argument('--ignore_punct', default=True)
-    parser.add_argument('--ignore_case', default=False)
-    parser.add_argument('--ignore_space', default=False)
-    parser.add_argument('--align', default='auto', const='auto', nargs='?', choices=['auto', 'never', 'always'])
-    parser.add_argument('--output-csv', action='store_true')
+    parser.add_argument('--gold_file', type=str, required=True,
+                        help='JSON file against which to compare the system output')
+    parser.add_argument('--orig_file', type=str,
+                        help='JSON file with the original input. Will be used to compute OOV scores')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica',
+                        help='Name of the dataset containing the lexicon (default: %(default)s)')
+    group.add_argument('--lexicon_file', type=str, help='Path to the lexicon JSON file.')
+    parser.add_argument('--ignore_punct', default=True, action=argparse.BooleanOptionalAction,
+                        help='Ignore punctuation during evaluation (default: %(default)s)')
+    parser.add_argument('--ignore_case', default=False, action=argparse.BooleanOptionalAction,
+                        help='Ignore casing during evaluation (default: %(default)s)')
+    parser.add_argument('--ignore_space', default=False, action=argparse.BooleanOptionalAction,
+                        help='Ignore whitespaces during evaluation (default: %(default)s)')
+    parser.add_argument('--align', default='auto', const='auto', nargs='?', choices=['auto', 'never', 'always'],
+                        help="Specifies how text alignment should be handled. Options: 'auto', 'never', or 'always' (default: %(default)s)")
+    parser.add_argument('--output-csv', action='store_true',
+                        help='Output the evaluation results in CSV format')
+    parser.add_argument('--input_file', type=str, required=True, nargs='+',
+                        help='Path to one or more input files to be evaluated')
 
     args = parser.parse_args()
     logger.setLevel(logging.INFO)
@@ -136,8 +146,8 @@ def main():
                     token = token.translate(trans)
                 yield token
 
-    logger.info('loading ref file')
-    ref_sentences = list(read_file_sentences(args.ref_file, dataset_token_field='norm'))
+    logger.info('loading gold file')
+    gold_sentences = list(read_file_sentences(args.gold_file, dataset_token_field='norm'))
 
     train_vocab = None
     orig_sentences = None
@@ -153,24 +163,24 @@ def main():
         orig_sentences = list(read_file_sentences(args.orig_file, dataset_token_field='orig'))
         columns = ['word_acc', 'word_acc_invocab', 'word_acc_oov', 'cerI']
 
-    ref_tokens = list(itertools.chain.from_iterable(ref_sentences))
+    gold_tokens = list(itertools.chain.from_iterable(gold_sentences))
     orig_tokens = list(itertools.chain.from_iterable(orig_sentences)) if orig_sentences is not None else None
 
     # pre-process tokens to fit the desired evaluation type
-    ref_tokens = list(map_tokens(ref_tokens, ref_tokens))
+    gold_tokens = list(map_tokens(gold_tokens, gold_tokens))
 
     output_df = pandas.DataFrame(columns=columns)
     if orig_tokens:
         logger.info('evaluating identity')
-        identity_metrics = calc_metrics(gold_tokens=ref_tokens,
+        identity_metrics = calc_metrics(gold_tokens=gold_tokens,
                                          pred_tokens=orig_tokens,
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
         output_df.loc['identity'] = identity_metrics
 
         logger.info('evaluating best theoret. type')
-        besttype_metrics = calc_metrics(gold_tokens=ref_tokens,
-                                         pred_tokens=besttype_prediction(orig_tokens, ref_tokens),
+        besttype_metrics = calc_metrics(gold_tokens=gold_tokens,
+                                         pred_tokens=besttype_prediction(orig_tokens, gold_tokens),
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
         output_df.loc['besttype'] = besttype_metrics
@@ -182,11 +192,11 @@ def main():
             continue
 
         logger.info(f'evaluating {filename}')
-        predicted_sentences = list(tqdm(read_file_sentences(filename, align=args.align, ref_sentences=ref_sentences), total=len(ref_sentences), leave=False))
+        predicted_sentences = list(tqdm(read_file_sentences(filename, align=args.align, gold_sentences=gold_sentences), total=len(gold_sentences), leave=False))
         pred_tokens = list(itertools.chain.from_iterable(predicted_sentences))
         # pre-process tokens to fit the desired evaluation type
-        pred_tokens = list(map_tokens(pred_tokens, ref_tokens))
-        metrics = calc_metrics(gold_tokens=ref_tokens,
+        pred_tokens = list(map_tokens(pred_tokens, gold_tokens))
+        metrics = calc_metrics(gold_tokens=gold_tokens,
                                 pred_tokens=pred_tokens,
                                 train_vocab_tokens=train_vocab,
                                 orig_tokens=orig_tokens)

@@ -49,22 +49,38 @@ def load_input(input_file, do_tokenize=False):
 def main():
     parser = argparse.ArgumentParser()
 
-    # TODO add descriptions!
-    parser.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica')
-    parser.add_argument('--lexicon_file', type=str)
-    parser.add_argument('--no_lexicon', action='store_true')
-    parser.add_argument('--no_type_model', action='store_true')
-    parser.add_argument('--no_language_model', action='store_true')
-    parser.add_argument('--is_pretokenized', action='store_true')
-    parser.add_argument('--type_model', type=str, default='aehrm/dtaec-type-normalizer')
-    parser.add_argument('--type_model_batch_size', type=int, default=64)
-    parser.add_argument('--language_model', type=str, default='dbmdz/german-gpt2')
-    parser.add_argument('--language_model_batch_size', type=int, default=8)
-    parser.add_argument('--alpha', type=float, default=0.5)
-    parser.add_argument('--beta', type=float, default=0.5)
-    parser.add_argument('--input_file', type=str, default='-')
-    parser.add_argument('--output_file', type=argparse.FileType('w'), default=sys.stdout)
-    parser.add_argument('--output_text', action='store_true')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica',
+                       help='Name of the dataset containing the lexicon (default: %(default)s)')
+    group.add_argument('--lexicon_file', type=str,
+                       help='JSON lexicon file')
+    group.add_argument('--no_lexicon', action='store_true',
+                       help='Do not use lexicon for normalization')
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument('--type_model', type=str, default='aehrm/dtaec-type-normalizer',
+                        help='Type model to be used (default: %(default)s).')
+    group2.add_argument('--no_type_model', action='store_true',
+                        help='Do not use type model for normalization')
+    parser.add_argument('--type_model_batch_size', type=int, default=64,
+                        help='Batch size for the type model (default: %(default)s).')
+    group3 = parser.add_mutually_exclusive_group()
+    group3.add_argument('--language_model', type=str, default='dbmdz/german-gpt2',
+                        help='Language model to be used (default: %(default)s)')
+    group3.add_argument('--no_language_model', action='store_true', help='Do not use language model for normalization')
+    parser.add_argument('--language_model_batch_size', type=int, default=8,
+                        help='Batch size for the language model (default: %(default)s)')
+    parser.add_argument('--alpha', type=float, default=0.5,
+                        help='Alpha parameter for model weighting (default: %(default)s)')
+    parser.add_argument('--beta', type=float, default=0.5,
+                        help='Beta parameter for model weighting (default: %(default)s)')
+    parser.add_argument('--is_pretokenized', action='store_true',
+                        help='Supplied input is already whitespace-tokenized; skip tokenization')
+    parser.add_argument('--input_file', type=str, default='-',
+                        help='Input file path; use "-" for standard input (default: stdin)')
+    parser.add_argument('--output_file', type=str, default='-',
+                        help='Output file path; use "-" for standard output (default: stdout)')
+    parser.add_argument('--output_text', action='store_true',
+                        help='Output will be formatted as recombined detokenized text')
 
     args = parser.parse_args()
     logging.basicConfig(
@@ -121,9 +137,10 @@ def main():
     else:
         oov_replacement_probabilities = {orig_type: [(orig_type, 1)] for orig_type in oov_types}
 
+    output_file = open(args.output_file, 'w') if args.output_file != '-' else sys.stdout
     def print_result(tokens):
         if args.output_text:
-            print(DETOKENIZER.detokenize(recombine_tokens(tokens)), file=args.output_file)
+            print(DETOKENIZER.detokenize(recombine_tokens(tokens)), file=output_file)
         else:
             print(' '.join(tokens), file=args.output_file)
 
@@ -162,6 +179,7 @@ def main():
             best_pred, _, _, _ = predictions[0]
             print_result(best_pred)
 
+    output_file.close()
 
 if __name__ == '__main__':
     main()
