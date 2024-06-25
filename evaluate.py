@@ -126,15 +126,14 @@ def main():
     parser.add_argument('--orig_file', type=str,
                         help='JSON file with the original input. Will be used to compute OOV scores')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica',
-                        help='Name of the dataset containing the lexicon (default: %(default)s)')
-    group.add_argument('--lexicon_file', type=str, help='Path to the lexicon JSON file.')
+    group.add_argument('--lexicon_dataset_name', type=str, help='Name of the dataset containing the lexicon')
+    group.add_argument('--lexicon_file', type=str, help='Path to the lexicon JSON file')
     parser.add_argument('--ignore_punct', default=True, action=argparse.BooleanOptionalAction,
                         help='Ignore punctuation during evaluation (default: %(default)s)')
     parser.add_argument('--ignore_case', default=False, action=argparse.BooleanOptionalAction,
                         help='Ignore casing during evaluation (default: %(default)s)')
-    parser.add_argument('--ignore_space', default=False, action=argparse.BooleanOptionalAction,
-                        help='Ignore whitespaces during evaluation (default: %(default)s)')
+    parser.add_argument('--ignore_spacing', default=False, action=argparse.BooleanOptionalAction,
+                        help='Ignore spacing during evaluation (default: %(default)s)')
     parser.add_argument('--align', default='auto', const='auto', nargs='?', choices=['auto', 'never', 'always'],
                         help="Specifies how text alignment should be handled. Options: 'auto', 'never', or 'always' (default: %(default)s)")
     parser.add_argument('--output-csv', action='store_true',
@@ -155,24 +154,29 @@ def main():
             else:
                 if args.ignore_case:
                     token = token.lower()
-                if args.ignore_space:
+                if args.ignore_spacing:
                     token = token.translate(trans)
                 yield token
 
-    logger.info('loading gold file')
+    logger.info(f'loading gold file {args.gold_file}')
     gold_sentences = list(read_file_sentences(args.gold_file, dataset_token_field='norm'))
 
+    train_lexicon = None
     train_vocab = None
-    orig_sentences = None
-    columns = ['word_acc', 'cerI']
-    if (args.lexicon_dataset_name or args.lexicon_file) and args.orig_file:
-        logger.info('loading train lexicon')
+    if args.lexicon_dataset_name or args.lexicon_file:
         if args.lexicon_file:
-            train_vocab = Lexicon.from_dataset('json', data_files=args.lexicon_file, split='train').keys()
+            logger.info(f'loading train lexicon {args.lexicon_file}')
+            train_lexicon = Lexicon.from_dataset('json', data_files=args.lexicon_file, split='train')
+            train_vocab = train_lexicon.keys()
         elif args.lexicon_dataset_name:
-            train_vocab = Lexicon.from_dataset(args.lexicon_dataset_name, split='train').keys()
+            logger.info(f'loading train lexicon {args.lexicon_dataset_name}')
+            train_lexicon = Lexicon.from_dataset(args.lexicon_dataset_name, split='train')
+            train_vocab = train_lexicon.keys()
 
-        logger.info('loading orig file')
+    columns = ['word_acc', 'cerI']
+    orig_sentences = None
+    if args.orig_file:
+        logger.info(f'loading orig file {args.orig_file}')
         orig_sentences = list(read_file_sentences(args.orig_file, dataset_token_field='orig'))
         columns = ['word_acc', 'word_acc_invocab', 'word_acc_oov', 'cerI']
 

@@ -50,8 +50,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--lexicon_dataset_name', type=str, default='aehrm/dtaec-lexica',
-                       help='Name of the dataset containing the lexicon (default: %(default)s)')
+    group.add_argument('--lexicon_dataset_name', type=str,
+                       help='Name of the dataset containing the lexicon (default: aehrm/dtaec-lexica)')
     group.add_argument('--lexicon_file', type=str,
                        help='JSON lexicon file')
     group.add_argument('--no_lexicon', action='store_true',
@@ -90,26 +90,34 @@ def main():
 
     train_lexicon = Lexicon()
     if not args.no_lexicon:
-        logger.info('loading lexicon')
         if args.lexicon_dataset_name:
+            logger.info(f'loading lexicon {args.lexicon_dataset_name}')
             train_lexicon = Lexicon.from_dataset(args.lexicon_dataset_name, split='train')
         elif args.lexicon_file:
+            logger.info(f'loading lexicon {args.lexicon_file}')
             train_lexicon = Lexicon.from_dataset('json', data_files=args.lexicon_file, split='train')
         else:
-            logger.error('no lexicon specified!')
-            sys.exit(1)
+            logger.error('no lexicon specified, loading default lexicon aehrm/dtaec-lexica')
+            train_lexicon = Lexicon.from_dataset('aehrm/dtaec-lexica', split='train')
 
     type_model_tokenizer = None
     type_model = None
     if not args.no_type_model:
-        logger.info('loading type model')
+        logger.info(f'loading type model {args.type_model}')
         type_model_tokenizer = AutoTokenizer.from_pretrained(args.type_model)
         type_model = AutoModelForSeq2SeqLM.from_pretrained(args.type_model)
 
+    do_rerank = True
+    if args.no_language_model:
+        do_rerank = False
+    if args.alpha == 0 and args.beta == 0:
+        logger.warning('parameters alpha and beta set to 0, thus language model reranking has no effect; will not run the language model')
+        do_rerank = False
+
     language_model_tokenizer = None
     language_model = None
-    if not args.no_language_model:
-        logger.info('loading large language model')
+    if do_rerank:
+        logger.info(f'loading large language model {args.language_model}')
         language_model_tokenizer = AutoTokenizer.from_pretrained(args.language_model)
         language_model = AutoModelForCausalLM.from_pretrained(args.language_model)
         if 'pad_token' not in language_model_tokenizer.special_tokens_map:
@@ -142,15 +150,8 @@ def main():
         if args.output_text:
             print(DETOKENIZER.detokenize(recombine_tokens(tokens)), file=output_file)
         else:
-            print(' '.join(tokens), file=args.output_file)
+            print(' '.join(tokens), file=output_file)
 
-
-    do_rerank = True
-    if args.no_language_model:
-        do_rerank = False
-    if args.alpha == 0 and args.beta == 0:
-        logger.warning('parameters alpha and beta set to 0, thus language model reranking has no effect; will not run the language model')
-        do_rerank = False
 
     if not do_rerank:
         logger.info('return the maximum prior normalization without language model reranking')

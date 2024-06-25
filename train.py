@@ -38,17 +38,18 @@ def main():
                         help='Path to evaluation file (default: %(default)s)')
     parser.add_argument('--output_dir', type=str, default='model_output',
                         help='Path to model output directory (default: %(default)s)')
-    parser.add_argument('--char_vocab', default=True, action=argparse.BooleanOptionalAction,
-                        help='Use alphabet as vocabulary (default: %(default)s)')
-    parser.add_argument('--vocab_size', type=int, help='Vocabulary size, requires --no-char_vocab')
-    parser.add_argument('--d_model', type=int, default=512, help='Dimension of model (default: %(default)s)')
-    parser.add_argument('--ffn_dim', type=int, default=2048,
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--char_vocab', action='store_true',
+                        help='Use alphabet as vocabulary (default: True)')
+    group.add_argument('--vocab_size', type=int, help='Vocabulary size, incompatible with --char_vocab')
+    parser.add_argument('--d_model', type=int, default=256, help='Dimension of model (default: %(default)s)')
+    parser.add_argument('--ffn_dim', type=int, default=1024,
                         help='Dimension of feed-forward network (default: %(default)s)')
-    parser.add_argument('--encoder_layers', type=int, default=6, help='Number of encoder layers (default: %(default)s)')
-    parser.add_argument('--encoder_attention_heads', type=int, default=8,
+    parser.add_argument('--encoder_layers', type=int, default=4, help='Number of encoder layers (default: %(default)s)')
+    parser.add_argument('--encoder_attention_heads', type=int, default=4,
                         help='Number of encoder attention heads (default: %(default)s)')
-    parser.add_argument('--decoder_layers', type=int, default=6, help='Number of decoder layers (default: %(default)s)')
-    parser.add_argument('--decoder_attention_heads', type=int, default=8,
+    parser.add_argument('--decoder_layers', type=int, default=4, help='Number of decoder layers (default: %(default)s)')
+    parser.add_argument('--decoder_attention_heads', type=int, default=4,
                         help='Number of decoder attention heads (default: %(default)s)')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate (default: %(default)s)')
     parser.add_argument('--train_batch_size', type=int, default=8,
@@ -59,12 +60,12 @@ def main():
 
     args = parser.parse_args()
 
-    if args.char_vocab and args.vocab_size:
-        logger.error('Options --char_vocab and --vocab_size cannot be specified together!')
-        sys.exit(1)
+    char_vocab = args.char_vocab
+    if not args.char_vocab and not args.vocab_size:
+        char_vocab = True
 
     # set up datasets
-    if args.train_file.endswith('jsonl'):
+    if str(args.train_file).endswith('jsonl'):
         split_lexicons = {
             'train': Lexicon.from_dataset('json', data_files=str(args.train_file), split='train'),
             'dev': Lexicon.from_dataset('json', data_files=str(args.eval_file), split='train')
@@ -96,7 +97,7 @@ def main():
 
     # set up tokenizer
     if tokenizer is None:
-        tokenizer = train_tokenizer(split_lexicons['train'], vocab_size=args.vocab_size, character_model=args.char_vocab)
+        tokenizer = train_tokenizer(split_lexicons['train'], vocab_size=args.vocab_size, character_model=char_vocab)
         tokenizer.save_pretrained(args.output_dir)
 
     # tokenize dataset
