@@ -39,7 +39,7 @@ def predict_type_normalization(types, type_model_tokenizer, type_model, batch_si
            probas = {(k, sum(v)) for k, v in grouper}
            yield types[indices[i]], probas
 
-def reranked_normalization(orig_tokens, train_lexicon, type_repacement_probabilities, llm_tokenizer, llm_model, alpha=1, beta=1, **kwargs):
+def reranked_normalization(orig_tokens, train_lexicon, type_repacement_probabilities, llm_tokenizer, llm_model, alpha=0.5, beta=0.5, **kwargs):
     trans = str.maketrans("", "", '░▁')
 
     alpha = max(1e-5, alpha)
