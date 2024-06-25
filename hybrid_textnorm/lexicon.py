@@ -9,7 +9,13 @@ class Lexicon(collections.abc.Mapping):
         if lexicon_dict is None:
             self.lexicon_dict = dict()
         else:
-            self.lexicon_dict = lexicon_dict
+            # we re-sort so that ties are sorted alphabetically, in order to deterministically retrieve top-k results
+            lexicon_dict_sorted = {}
+            for k, entries in lexicon_dict.items():
+                sorted_entries = sorted(entries.items(), key=lambda x: (-x[1], x[0]))
+                lexicon_dict_sorted[k] = collections.Counter(dict(sorted_entries))
+
+            self.lexicon_dict = lexicon_dict_sorted
 
     def __getitem__(self, __key):
         return self.lexicon_dict[__key]
