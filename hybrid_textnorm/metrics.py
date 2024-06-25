@@ -25,7 +25,7 @@ def cerI(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
             continue
 
         dist = Levenshtein.distance(gold, pred)
-        cer = dist / len(gold)
+        cer = dist / max(1, len(gold))
         cerI_values.append(cer)
 
         if orig is not None:
