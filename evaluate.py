@@ -92,6 +92,19 @@ def besttype_prediction(orig_tokens, gold_tokens):
     return output
 
 
+def lexicon_prediction(orig_tokens, train_lexicon):
+    output = []
+    for orig_token in orig_tokens:
+        if orig_token in train_lexicon.keys():
+            subst, _ = train_lexicon[orig_token].most_common(1)[0]
+            output.append(subst)
+        else:
+            output.append(orig_token)
+
+    return output
+
+
+
 def calc_metrics(gold_tokens, pred_tokens, train_vocab_tokens=None, orig_tokens=None):
     wordacc = word_accuracy(gold_tokens=gold_tokens,
                             pred_tokens=pred_tokens,
@@ -172,18 +185,31 @@ def main():
     output_df = pandas.DataFrame(columns=columns)
     if orig_tokens:
         logger.info('evaluating identity')
+        pred_tokens = list(map_tokens(orig_tokens, gold_tokens))
         identity_metrics = calc_metrics(gold_tokens=gold_tokens,
-                                         pred_tokens=orig_tokens,
+                                         pred_tokens=pred_tokens,
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
         output_df.loc['identity'] = identity_metrics
 
         logger.info('evaluating best theoret. type')
+        pred_tokens = besttype_prediction(orig_tokens, gold_tokens)
+        pred_tokens = list(map_tokens(pred_tokens, gold_tokens))
         besttype_metrics = calc_metrics(gold_tokens=gold_tokens,
-                                         pred_tokens=besttype_prediction(orig_tokens, gold_tokens),
+                                         pred_tokens=pred_tokens,
                                          train_vocab_tokens=train_vocab,
                                          orig_tokens=orig_tokens)
         output_df.loc['besttype'] = besttype_metrics
+
+    if orig_tokens and train_lexicon:
+        logger.info('evaluating lexicon')
+        pred_tokens = lexicon_prediction(orig_tokens, train_lexicon)
+        pred_tokens = list(map_tokens(pred_tokens, gold_tokens))
+        lexicon_metrics = calc_metrics(gold_tokens=gold_tokens,
+                                        pred_tokens=pred_tokens,
+                                        train_vocab_tokens=train_vocab,
+                                        orig_tokens=orig_tokens)
+        output_df.loc['lexicon'] = lexicon_metrics
 
     for filename in args.input_file:
         if filename.endswith('README.md'):
