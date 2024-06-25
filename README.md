@@ -36,6 +36,7 @@ Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tok
 |                                                                   | **WordAcc** | **WordAcc (invocab)** | **WordAcc (oov)** | **CER<sub>I</sub>** |
 |:------------------------------------------------------------------|------------:|----------------------:|------------------:|--------------------:|
 | _Identity_                                                        |      96.513 |                97.015 |            83.912 |              20.715 |
+| _Lexicon_                                                         |      98.881 |                99.477 |            83.912 |              18.767 |
 | _Best theoret. type map_                                          |      99.547 |                99.533 |            99.896 |              22.612 |
 | [Csmtiser](https://github.com/clarinsi/csmtiser) (sentence-level) |      98.928 |                99.317 |            89.160 |              21.151 |
 | [Csmtiser](https://github.com/clarinsi/csmtiser) (token-level)    |      98.940 |                99.321 |            89.369 |              19.997 |
@@ -99,7 +100,7 @@ sha256sum -c dtaec-0.03.tar.gz.sha256sum
 tar xvf dtaec-0.03.tar.gz
 cd ..
 
-poetry run python generate_dataset.py
+poetry run python prepare_dataset.py --write_baseline_format
 ```
 
 ### Training
