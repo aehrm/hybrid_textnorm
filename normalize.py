@@ -14,7 +14,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausa
 from hybrid_textnorm.beam_search import make_tokens_to_llm_string
 from hybrid_textnorm.detokenizer import DtaEvalDetokenizer
 from hybrid_textnorm.lexicon import Lexicon
-from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization
+from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization, prior_normalization
 from hybrid_textnorm.preprocess import german_transliterate, recombine_tokens
 
 logger = logging.getLogger(__name__)
@@ -156,15 +156,7 @@ def main():
     if not do_rerank:
         logger.info('return the maximum prior normalization without language model reranking')
         for orig_sent in tqdm(input_dataset):
-            pred = []
-            for orig_tok in orig_sent:
-                if orig_tok in train_lexicon.keys():
-                    pred.append(train_lexicon[orig_tok].most_common(1)[0][0])
-                else:
-                    replacements = oov_replacement_probabilities[orig_tok]
-                    best_replace, _ = max(replacements, key=lambda x: x[1])
-                    pred.append(best_replace)
-
+            pred = prior_normalization(orig_sent, train_lexicon, oov_replacement_probabilities)
             print_result(pred)
     else:
         logger.info('reranking normalization hypotheses with the language model')
@@ -172,8 +164,9 @@ def main():
             language_model.cuda()
         for orig_sent in tqdm(input_dataset):
             if len(language_model_tokenizer(make_tokens_to_llm_string(orig_sent))['input_ids']) + 50 > language_model_tokenizer.model_max_length:
-                logger.info('sentence too long, giving up')
-                print_result(orig_sent)
+                logger.info('sentence too long, falling back to prior normalization')
+                pred = prior_normalization(orig_sent, train_lexicon, oov_replacement_probabilities)
+                print_result(pred)
                 continue
 
             predictions = reranked_normalization(orig_sent, train_lexicon, oov_replacement_probabilities, language_model_tokenizer, language_model, alpha=args.alpha, beta=args.beta, batch_size=args.language_model_batch_size)

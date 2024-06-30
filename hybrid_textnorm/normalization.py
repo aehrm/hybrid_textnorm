@@ -36,10 +36,22 @@ def predict_type_normalization(types, type_model_tokenizer, type_model, batch_si
            # merge identical outputs
            it = sorted(probas.items(), key=lambda x: x[0])
            grouper = more_itertools.groupby_transform(it, lambda x: x[0], lambda x: x[1])
-           probas = {(k, sum(v)) for k, v in grouper}
+           probas = [(k, sum(v)) for k, v in grouper]
            yield types[indices[i]], probas
 
-def reranked_normalization(orig_tokens, train_lexicon, type_repacement_probabilities, llm_tokenizer, llm_model, alpha=0.5, beta=0.5, **kwargs):
+def prior_normalization(orig_tokens, train_lexicon, type_replacement_probabilities):
+    pred = []
+    for orig_tok in orig_tokens:
+        if orig_tok in train_lexicon.keys():
+            pred.append(train_lexicon[orig_tok].most_common(1)[0][0])
+        else:
+            replacements = type_replacement_probabilities[orig_tok]
+            best_replace, _ = max(replacements, key=lambda x: x[1])
+            pred.append(best_replace)
+
+    return pred
+
+def reranked_normalization(orig_tokens, train_lexicon, type_replacement_probabilities, llm_tokenizer, llm_model, alpha=0.5, beta=0.5, **kwargs):
     trans = str.maketrans("", "", '░▁')
 
     alpha = max(1e-5, alpha)
@@ -61,7 +73,7 @@ def reranked_normalization(orig_tokens, train_lexicon, type_repacement_probabili
             candidates_scored = [(candidate, 1 / beta * np.log(freq / total)) for candidate, freq in candidates]
             constraint_seq.append(candidates_scored)
         else:
-            candidates = type_repacement_probabilities[tok]
+            candidates = type_replacement_probabilities[tok]
             candidates_scored = [(candidate, 1 / alpha * np.log(proba)) for candidate, proba in candidates]
             constraint_seq.append(candidates_scored)
 

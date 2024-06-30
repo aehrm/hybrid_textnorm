@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2Se
 
 from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.metrics import word_accuracy
-from hybrid_textnorm.normalization import reranked_normalization, predict_type_normalization
+from hybrid_textnorm.normalization import reranked_normalization, predict_type_normalization, prior_normalization
 
 
 def main():
@@ -50,15 +50,7 @@ def main():
         print(f'alpha={alpha}, beta={beta}')
         for row in tqdm(dev_dataset):
             if alpha == 0 and beta == 0:
-                best_pred_tokens = []
-                for orig_tok in row['tokens']['orig']:
-                    if orig_tok in train_lexicon.keys():
-                        best_pred_tokens.append(train_lexicon[orig_tok].most_common(1)[0][0])
-                    else:
-                        replacements = oov_replacement_probabilities[orig_tok]
-                        best_replace, _ = max(replacements, key=lambda x: x[1])
-                        best_pred_tokens.append(best_replace)
-
+                best_pred_tokens = prior_normalization(row['tokens']['orig'], train_lexicon, oov_replacement_probabilities)
             else:
                 pred = reranked_normalization(row['tokens']['orig'], train_lexicon, oov_replacement_probabilities, language_model_tokenizer, language_model, alpha=alpha, beta=beta, batch_size=96)
                 best_pred_tokens, _, _, _ = pred[0]
