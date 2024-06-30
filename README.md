@@ -36,13 +36,13 @@ Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tok
 |                                                                   | **WordAcc** | **WordAcc (invocab)** | **WordAcc (oov)** | **CER<sub>I</sub>** |
 |:------------------------------------------------------------------|------------:|----------------------:|------------------:|--------------------:|
 | _Identity_                                                        |      96.513 |                97.015 |            83.912 |              20.715 |
-| _Lexicon_                                                         |      98.881 |                99.477 |            83.912 |              18.767 |
+| _Lexicon_                                                         |      98.881 |                99.477 |            83.912 |          **18.767** |
 | _Best theoret. type map_                                          |      99.547 |                99.533 |            99.896 |              22.612 |
 | [Csmtiser](https://github.com/clarinsi/csmtiser) (sentence-level) |      98.928 |                99.317 |            89.160 |              21.151 |
 | [Csmtiser](https://github.com/clarinsi/csmtiser) (token-level)    |      98.940 |                99.321 |            89.369 |              19.997 |
 | [Norma](https://github.com/comphist/norma)                        |      96.834 |                99.477 |            30.521 |              23.392 |
 | [Transnormer](https://github.com/ybracke/transnormer)             |      98.979 |                99.271 |            91.653 |              24.937 |
-| hybrid_textnorm w/o LLM                                           |      99.111 |                99.481 |            89.823 |          **19.834** |
+| hybrid_textnorm w/o LLM                                           |      99.111 |                99.481 |            89.823 |              19.834 |
 | hybrid_textnorm                                                   |  **99.196** |            **99.495** |        **91.701** |              20.451 |
 
 
@@ -87,7 +87,54 @@ options:
 
 ## API
 
-Todo
+You can use the normalizer programmatically using the API. To install the normalizer in your project, use for instance
+```bash
+pip install git+https://github.com/aehrm/hybrid_textnorm
+```
+
+Then, you can start normalizing like this:
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
+from hybrid_textnorm.lexicon import Lexicon
+from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization, prior_normalization
+
+lexicon_dataset_name = 'aehrm/dtaec-lexica'
+type_model_name = 'aehrm/dtaec-type-normalizer'
+language_model_name = 'dbmdz/german-gpt2'
+
+train_lexicon = Lexicon.from_dataset(lexicon_dataset_name, split='train')
+type_model_tokenizer = AutoTokenizer.from_pretrained(type_model_name)
+type_model = AutoModelForSeq2SeqLM.from_pretrained(type_model_name)
+
+hist_sentence = ['Wers', 'nicht', 'glaubt', ',', 'bezahlt', 'einen', 'Thaler', '.']
+
+# generate normalization hypotheses for the oov types
+oov_types = set(hist_sentence) - train_lexicon.keys()
+if torch.cuda.is_available():
+    type_model.cuda()
+
+oov_replacement_probabilities = dict(predict_type_normalization(oov_types, type_model_tokenizer, type_model))
+type_model.cpu()
+
+# # if you want to skip the language model reranking:
+# prior_pred = prior_normalization(hist_sentence, train_lexicon, oov_replacement_probabilities)
+# print(prior_pred)
+
+# rerank with the language model
+language_model_tokenizer = AutoTokenizer.from_pretrained(language_model_name)
+language_model = AutoModelForCausalLM.from_pretrained(language_model_name)
+if 'pad_token' not in language_model_tokenizer.special_tokens_map:
+    language_model_tokenizer.add_special_tokens({'pad_token': '<pad>'})
+
+if torch.cuda.is_available():
+    language_model.cuda()
+
+predictions = reranked_normalization(hist_sentence, train_lexicon, oov_replacement_probabilities, language_model_tokenizer, language_model)
+best_pred, _, _, _ = predictions[0]
+print(best_pred)
+# >>> ['Wer▁es', 'nicht', 'glaubt', ',', 'bezahlt', 'einen', 'Taler', '.']
+```
 
 ## Reproduction
 
@@ -139,6 +186,7 @@ docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/out
 docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/output:/output ehrmanntraut/csmtiser_token
 docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/output:/output ehrmanntraut/csmtiser_sentence
 docker run --rm -it -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/output:/output ehrmanntraut/transnormer
+# or with gpus: docker run --rm -it --gpus -v $(pwd)/dataset/processed:/dataset -v $(pwd)/baselines/output:/output ehrmanntraut/transnormer
 
 poetry run python baselines/cab/fetch_cab_normalization.py
 poetry run python baselines/cab/fetch_cab_normalization.py --disable-exlex
