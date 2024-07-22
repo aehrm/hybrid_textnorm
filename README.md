@@ -43,7 +43,7 @@ Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tok
 | [Norma](https://github.com/comphist/norma)                        |      96.834 |                99.477 |            30.521 |              23.392 |
 | [Transnormer](https://github.com/ybracke/transnormer)             |      98.979 |                99.271 |            91.653 |              24.937 |
 | hybrid_textnorm w/o LLM                                           |      99.111 |                99.481 |            89.823 |              19.834 |
-| hybrid_textnorm                                                   |  **99.196** |            **99.495** |        **91.701** |              20.451 |
+| hybrid_textnorm                                                   |  **99.194** |            **99.493** |        **91.701** |              20.451 |
 
 
 ## Usage
