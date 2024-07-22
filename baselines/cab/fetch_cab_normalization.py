@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 
 def make_request(rows_batch, exlex_enabled=True):
-    url = f"https://www.deutschestextarchiv.de/public/cab/query?qname=qd&a=default&exlex_enabled={int(exlex_enabled)}&ifmt=json&ofmt=json"
+    url = f"https://www.deutschestextarchiv.de/public/cab/query?qname=qd&a=default&exlex_enabled={int(exlex_enabled)}&static_enabled=0&clean=1&ifmt=json&ofmt=json"
 
     request_input = {'body': []}
     for row in rows_batch:
