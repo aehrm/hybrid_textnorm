@@ -97,7 +97,7 @@ def main():
             logger.info(f'loading lexicon {args.lexicon_file}')
             train_lexicon = Lexicon.from_dataset('json', data_files=args.lexicon_file, split='train')
         else:
-            logger.error('no lexicon specified, loading default lexicon aehrm/dtaec-lexica')
+            logger.warning('no lexicon specified, loading default lexicon aehrm/dtaec-lexica')
             train_lexicon = Lexicon.from_dataset('aehrm/dtaec-lexica', split='train')
 
     type_model_tokenizer = None

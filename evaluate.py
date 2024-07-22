@@ -50,7 +50,18 @@ def read_file_sentences(filename, dataset_token_field=None, align='auto', gold_s
 
         if all(' ' not in l for l in lines):
             # assume one token per line -> one big "sentence"
-            yield [line.strip() for line in lines]
+            tokens = [line.strip() for line in lines]
+
+            if gold_sentences is not None:
+                # add sentence splits according to gold sentences
+                ctr = 0
+                for gold_sent in gold_sentences:
+                    gold_sent_len = len(gold_sent)
+                    yield tokens[ctr:ctr+gold_sent_len]
+                    ctr += gold_sent_len
+            else:
+                # fallback -> one big "sentence"
+                yield [line.strip() for line in lines]
         else:
             # assume one (space-tokenized) sentence per line
             do_align = False
