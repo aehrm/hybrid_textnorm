@@ -18,7 +18,10 @@ def align_pred_sent_with_gold_sent(predicted_sent, gold_sent):
     original_spacing_tokens = []
     trans = str.maketrans("", "", '░▁')
     for gold_tok in gold_sent:
-        original_spacing_tokens.append(gold_tok.translate(trans))
+        if gold_tok == '░':
+            original_spacing_tokens.append(gold_tok)
+        else:
+            original_spacing_tokens.append(gold_tok.translate(trans))
 
     alignment = align_token_sequences(original_spacing_tokens, predicted_sent)
 

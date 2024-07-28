@@ -36,15 +36,21 @@ def align_token_sequences(tokens_src, tokens_tgt, homogenise=None):
                 current_word = ['', '']
     # final word
     alignment.append((current_word[0].strip(), current_word[1].strip()))
-    # check that both strings are entirely covered
-    recovered1 = re.sub(' +', ' ', ' '.join([x[0] for x in alignment]))
-    recovered2 = re.sub(' +', ' ', ' '.join([x[1] for x in alignment]))
 
-    assert recovered1 == re.sub(' +', ' ', str_src), \
-        '\n' + re.sub(' +', ' ', recovered1) + "\n" + re.sub(' +', ' ', str_src)
-    assert re.sub('[░▁ ]+', '', recovered2) == re.sub('[▁ ]+', '', str_tgt), recovered2 + " / " + str_tgt
+    try:
+        # check that both strings are entirely covered
+        recovered1 = re.sub(' +', ' ', ' '.join([x[0] for x in alignment]))
+        recovered2 = re.sub(' +', ' ', ' '.join([x[1] for x in alignment]))
 
-    assert [x[0] for x in alignment] == tokens_src
+        assert recovered1 == re.sub(' +', ' ', str_src), \
+            '\n' + re.sub(' +', ' ', recovered1) + "\n" + re.sub(' +', ' ', str_src)
+        assert re.sub('[░▁ ]+', '', recovered2) == re.sub('[▁ ]+', '', str_tgt), recovered2 + " / " + str_tgt
+        assert [x[0] for x in alignment] == tokens_src
+    except AssertionError as e:
+        e.add_note(f"{tokens_src}\n{tokens_tgt}\n")
+        e.add_note(f"{str_src}\n{str_tgt}\n")
+        e.add_note('\n'.join([f"{x[0]}\t{x[1]}" for x in alignment]))
+        raise
 
     return alignment
 
