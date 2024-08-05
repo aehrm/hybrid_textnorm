@@ -202,3 +202,7 @@ poetry run python evaluate.py \
     --input_file model_output/*.pred
     # or --input_file baselines/output/*.pred model_output/*.pred if you wand to include the baselines
 ```
+
+## License
+
+The source code of this repository (but not the model weights) are licensed under the MIT license. See `LICENSE.txt`.
