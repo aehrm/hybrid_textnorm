@@ -3,7 +3,7 @@
 A hybrid model to normalize historic text to contemporary orthography.
 
 Huggingface repositories:
-* [DTA Parallel Corpus Lexica](https://huggingface.co/datasets/aehrm/dtaec-lexica)
+* [DTA Parallel Corpus Lexicon](https://huggingface.co/datasets/aehrm/dtaec-lexicon)
 * [Type Normalization Transformer](https://huggingface.co/aehrm/dtaec-type-normalizer)
 
 The project uses poetry for dependency management. You can just run `poetry install` to install all dependencies.
@@ -61,7 +61,7 @@ usage: normalize.py [-h]
 options:
   -h, --help            show this help message and exit
   --lexicon_dataset_name LEXICON_DATASET_NAME
-                        Name of the dataset containing the lexicon (default: aehrm/dtaec-lexica)
+                        Name of the dataset containing the lexicon (default: aehrm/dtaec-lexicon)
   --lexicon_file LEXICON_FILE
                         JSON lexicon file
   --no_lexicon          Do not use lexicon for normalization
@@ -99,7 +99,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausa
 from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization, prior_normalization
 
-lexicon_dataset_name = 'aehrm/dtaec-lexica'
+lexicon_dataset_name = 'aehrm/dtaec-lexicon'
 type_model_name = 'aehrm/dtaec-type-normalizer'
 language_model_name = 'dbmdz/german-gpt2'
 

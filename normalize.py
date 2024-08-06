@@ -51,7 +51,7 @@ def main():
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--lexicon_dataset_name', type=str,
-                       help='Name of the dataset containing the lexicon (default: aehrm/dtaec-lexica)')
+                       help='Name of the dataset containing the lexicon (default: aehrm/dtaec-lexicon)')
     group.add_argument('--lexicon_file', type=str,
                        help='JSON lexicon file')
     group.add_argument('--no_lexicon', action='store_true',
@@ -97,8 +97,8 @@ def main():
             logger.info(f'loading lexicon {args.lexicon_file}')
             train_lexicon = Lexicon.from_dataset('json', data_files=args.lexicon_file, split='train')
         else:
-            logger.warning('no lexicon specified, loading default lexicon aehrm/dtaec-lexica')
-            train_lexicon = Lexicon.from_dataset('aehrm/dtaec-lexica', split='train')
+            logger.warning('no lexicon specified, loading default lexicon aehrm/dtaec-lexicon')
+            train_lexicon = Lexicon.from_dataset('aehrm/dtaec-lexicon', split='train')
 
     type_model_tokenizer = None
     type_model = None
