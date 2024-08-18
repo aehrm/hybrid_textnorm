@@ -1,6 +1,6 @@
 # Hybrid Model Text Normalization
 
-A hybrid model to normalize historic text to contemporary orthography.
+A hybrid model to normalize historic text to contemporary orthography. Trained on a subset of the [DTA Eval Corpus](https://kaskade.dwds.de/~moocow/software/dtaec).
 
 Huggingface repositories:
 * [DTA Parallel Corpus Lexicon](https://huggingface.co/datasets/aehrm/dtaec-lexicon)
@@ -29,7 +29,7 @@ poetry run python normalize.py --input_file input_file
 
 ## Performance
 
-Scores on a test set of the pre-transliterated [DTA-EC parallel corpus](https://kaskade.dwds.de/~moocow/software/dtaec). 
+Scores on a test set of the pre-transliterated [DTA Eval Corpus](https://kaskade.dwds.de/~moocow/software/dtaec). 
 Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tokens are out-of-vocabulary
 (i.e. not seen in the training set).
 
@@ -205,4 +205,4 @@ poetry run python evaluate.py \
 
 ## License
 
-The source code of this repository (but not the model weights) are licensed under the MIT license. See `LICENSE.txt`.
+The source code of this repository (but neither the respective model weights nor the lexicon) is licensed under the MIT license. See `LICENSE.txt`.
