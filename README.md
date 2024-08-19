@@ -12,19 +12,17 @@ You may open a shell with `poetry shell` with all required python packages and i
 
 ## Quickstart
 
-1\. Clone the repository and install the dependencies.
+1\. Install the package.
 
 ```bash
-git clone https://github.com/aehrm/hybrid_textnorm
-cd hybrid_textnorm
-poetry install --no-root
+pip install git+https://github.com/aehrm/hybrid_textnorm
 ```
 
 2\. Start normalizing text.
 
 ```bash
 echo "Im Nothfall könnte ich bey meinen gelehrten Freunden eine Anleihe von Citaten machen." > input_file
-poetry run python normalize.py --input_file input_file
+normalize_text --input_file input_file
 ```
 
 ## Performance
@@ -49,14 +47,14 @@ Contains 16 documents, ~36k sentences, ~701k tokens. Approximately 3.833% of tok
 ## Usage
 
 ```
-usage: normalize.py [-h]
-                    [--lexicon_dataset_name LEXICON_DATASET_NAME | --lexicon_file LEXICON_FILE | --no_lexicon]
-                    [--type_model TYPE_MODEL | --no_type_model]
-                    [--type_model_batch_size TYPE_MODEL_BATCH_SIZE]
-                    [--language_model LANGUAGE_MODEL | --no_language_model]
-                    [--language_model_batch_size LANGUAGE_MODEL_BATCH_SIZE] [--alpha ALPHA]
-                    [--beta BETA] [--is_pretokenized] [--input_file INPUT_FILE]
-                    [--output_file OUTPUT_FILE] [--output_text]
+usage: normalize_text [-h]
+            [--lexicon_dataset_name LEXICON_DATASET_NAME | --lexicon_file LEXICON_FILE | --no_lexicon]
+            [--type_model TYPE_MODEL | --no_type_model]
+            [--type_model_batch_size TYPE_MODEL_BATCH_SIZE]
+            [--language_model LANGUAGE_MODEL | --no_language_model]
+            [--language_model_batch_size LANGUAGE_MODEL_BATCH_SIZE] [--alpha ALPHA]
+            [--beta BETA] [--is_pretokenized] [--input_file INPUT_FILE]
+            [--output_file OUTPUT_FILE] [--output_text]
 
 options:
   -h, --help            show this help message and exit
@@ -138,6 +136,14 @@ print(best_pred)
 
 ## Reproduction
 
+### Clone the repository and install the dependencies.
+
+```bash
+git clone https://github.com/aehrm/hybrid_textnorm
+cd hybrid_textnorm
+poetry install --no-root
+```
+
 ### Generating the dataset
 
 ```bash
@@ -159,13 +165,13 @@ poetry run python train.py --output_dir model_output
 ### Running the model on the test set
 
 ```bash
-poetry run python normalize.py \
+poetry run hybrid_textnorm/cli_normalize.py \
     --type_model model_output \
     --lexicon_file dataset/processed/train.lexicon.jsonl \
     --input_file dataset/processed/test.jsonl \
     --output_file model_output/test.pred
     
-poetry run python normalize.py \
+poetry run hybrid_textnorm/cli_normalize.py \
     --type_model model_output \
     --lexicon_file dataset/processed/train.lexicon.jsonl \
     --input_file dataset/processed/test.jsonl \
