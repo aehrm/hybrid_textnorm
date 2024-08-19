@@ -74,7 +74,7 @@ def main():
     parser.add_argument('--beta', type=float, default=0.5,
                         help='Beta parameter for model weighting (default: %(default)s)')
     parser.add_argument('--is_pretokenized', action='store_true',
-                        help='Supplied input is already whitespace-tokenized; skip tokenization')
+                        help='Skip tokenization; this assumes that every line consists of a single sentence, and each line consists of whitepsace-separated tokens')
     parser.add_argument('--input_file', type=str, default='-',
                         help='Input file path; use "-" for standard input (default: stdin)')
     parser.add_argument('--output_file', type=str, default='-',
