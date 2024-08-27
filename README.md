@@ -75,7 +75,9 @@ options:
                         Batch size for the language model (default: 8)
   --alpha ALPHA         Alpha parameter for model weighting (default: 0.5)
   --beta BETA           Beta parameter for model weighting (default: 0.5)
-  --is_pretokenized     Supplied input is already whitespace-tokenized; skip tokenization
+  --is_pretokenized     Skip tokenization; this assumes a CONLL-like structure where every line
+                        consists of a single token, and sentence boundaries are marked with an
+                        empty line.
   --input_file INPUT_FILE
                         Input file path; use "-" for standard input (default: stdin)
   --output_file OUTPUT_FILE

@@ -41,9 +41,18 @@ def load_input(input_file, do_tokenize=False):
             for sentence in sentences:
                 yield [german_transliterate(tok.text) for tok in sentence]
         else:
+            # CONLL-style parsing
+            sentence = []
             for line in input_str.splitlines():
+                line = line.strip()
                 if line != '':
-                    yield [german_transliterate(tok) for tok in line.split(' ')]
+                    sentence.append(line)
+                else:
+                    if sentence:
+                        yield sentence
+                        sentence = []
+            if sentence:
+                yield sentence
 
 
 def main():
@@ -74,7 +83,8 @@ def main():
     parser.add_argument('--beta', type=float, default=0.5,
                         help='Beta parameter for model weighting (default: %(default)s)')
     parser.add_argument('--is_pretokenized', action='store_true',
-                        help='Skip tokenization; this assumes that every line consists of a single sentence, and each line consists of whitepsace-separated tokens')
+                        help='Skip tokenization; this assumes a CONLL-like structure where every line consists of a '
+                             'single token, and sentence boundaries are marked with an empty line.')
     parser.add_argument('--input_file', type=str, default='-',
                         help='Input file path; use "-" for standard input (default: stdin)')
     parser.add_argument('--output_file', type=str, default='-',
@@ -150,7 +160,7 @@ def main():
         if args.output_text:
             print(DETOKENIZER.detokenize(recombine_tokens(tokens)), file=output_file)
         else:
-            print(' '.join(tokens), file=output_file)
+            print('\n'.join(tokens) + '\n', file=output_file)
 
 
     if not do_rerank:
