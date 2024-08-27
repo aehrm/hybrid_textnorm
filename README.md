@@ -95,9 +95,11 @@ pip install git+https://github.com/aehrm/hybrid_textnorm
 Then, you can start normalizing like this:
 ```python
 import torch
+from nltk.tokenize.treebank import TreebankWordDetokenizer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 from hybrid_textnorm.lexicon import Lexicon
 from hybrid_textnorm.normalization import predict_type_normalization, reranked_normalization, prior_normalization
+from hybrid_textnorm.preprocess import recombine_tokens
 
 lexicon_dataset_name = 'aehrm/dtaec-lexicon'
 type_model_name = 'aehrm/dtaec-type-normalizer'
@@ -134,6 +136,11 @@ predictions = reranked_normalization(hist_sentence, train_lexicon, oov_replaceme
 best_pred, _, _, _ = predictions[0]
 print(best_pred)
 # >>> ['Wer▁es', 'nicht', 'glaubt', ',', 'bezahlt', 'einen', 'Taler', '.']
+
+# to remove pseudo-character + detokenize
+pred_sentence_str = TreebankWordDetokenizer().detokenize(recombine_tokens(best_pred))
+print(pred_sentence_str)
+# >> Wer es nicht glaubt, bezahlt einen Taler.
 ```
 
 ## Reproduction
