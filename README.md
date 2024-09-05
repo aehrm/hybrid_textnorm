@@ -1,6 +1,6 @@
 # Hybrid Model Text Normalization
 
-A hybrid model to normalize historic text to contemporary orthography. Trained on a subset of the [DTA Eval Corpus](https://kaskade.dwds.de/~moocow/software/dtaec).
+A hybrid model to normalize historic text to contemporary orthography. See full details in the accompanying [arxiv paper “Historical German Text Normalization Using Type- and Token-Based Language Modeling”](https://arxiv.org/abs/2409.02841). Trained on a subset of the [DTA Eval Corpus](https://kaskade.dwds.de/~moocow/software/dtaec).
 
 Huggingface repositories:
 * [DTA Parallel Corpus Lexicon](https://huggingface.co/datasets/aehrm/dtaec-lexicon)
@@ -218,6 +218,25 @@ poetry run python evaluate.py \
     # or --input_file baselines/output/*.pred model_output/*.pred if you wand to include the baselines
 ```
 
+## Citing
+
+If you use this software, please consider citing the accompanying arxiv paper as below:
+
+> Anton Ehrmanntraut. 2024. “Historical German Text Normalization Using Type- and Token-Based Language Modeling”. ArXiv e-print arXiv:2409.02841 [cs.CL] <https://doi.org/10.48550/arXiv.2409.02841>.
+
+```bibtex
+@misc{ehrmanntraut2024historicalgermantextnormalization,
+      title={Historical German Text Normalization Using Type- and Token-Based Language Modeling}, 
+      author={Anton Ehrmanntraut},
+      date={2024-09-05},
+      eprint={2409.02841},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2409.02841}, 
+}
+```
+
 ## License
 
 The source code of this repository (but neither the respective model weights nor the lexicon) is licensed under the MIT license. See `LICENSE.txt`.
+
